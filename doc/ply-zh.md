@@ -3,8 +3,58 @@
 
 有一些关键词机翻不统一，这里进行统一说明翻译含义：
 token  ： 符号
+documentation string
 ```
-
+<!-- TOC -->
+* [PLY (Python Lex-Yacc)](#ply-python-lex-yacc)
+  * [简介](#简介)
+  * [PLY 概览](#ply-概览)
+  * [Lex](#lex)
+    * [Lex Example](#lex-example)
+    * [符号列表](#符号列表)
+    * [符号的规格](#符号的规格)
+    * [符号的值](#符号的值)
+    * [忽略符号](#忽略符号)
+    * [行号和位置信息](#行号和位置信息)
+    * [被忽略的字符](#被忽略的字符)
+    * [字面字符](#字面字符)
+    * [错误处理](#错误处理)
+    * [换行处理](#换行处理)
+    * [构建并使用词法分析器](#构建并使用词法分析器)
+    * [\@TOKEN 装饰器](#token-装饰器)
+    * [调试](#调试)
+    * [词法解析器的可选规范](#词法解析器的可选规范)
+    * [状态的维护](#状态的维护)
+    * [克隆Lexer](#克隆lexer)
+    * [词法解析器的内部状态](#词法解析器的内部状态)
+    * [条件性解析和开始条件](#条件性解析和开始条件)
+    * [其它](#其它)
+  * [解析基础](#解析基础)
+  * [Yacc](#yacc)
+    * [示例](#示例)
+    * [合并语法规则的功能](#合并语法规则的功能)
+    * [Character Literals](#character-literals)
+    * [空语句处理](#空语句处理)
+    * [更改起始符号](#更改起始符号)
+    * [应对模糊语法的情况](#应对模糊语法的情况)
+    * [parser.out文件](#parserout文件)
+    * [语法错误处理](#语法错误处理)
+      * [使用错误规则进行回复和重新同步](#使用错误规则进行回复和重新同步)
+      * [紧急模式恢复](#紧急模式恢复)
+      * [从一个产品中报处错误信号](#从一个产品中报处错误信号)
+      * [语法错误何时会被报告？](#语法错误何时会被报告)
+      * [General comments on error handling](#general-comments-on-error-handling)
+    * [Line Number and Position Tracking](#line-number-and-position-tracking)
+    * [AST Construction](#ast-construction)
+    * [Embedded Actions](#embedded-actions)
+    * [Miscellaneous Yacc Notes](#miscellaneous-yacc-notes)
+  * [Multiple Parsers and Lexers](#multiple-parsers-and-lexers)
+  * [Advanced Debugging](#advanced-debugging)
+    * [Debugging the lex() and yacc() commands](#debugging-the-lex-and-yacc-commands)
+    * [Run-time Debugging](#run-time-debugging)
+  * [Using Python -OO Mode](#using-python--oo-mode)
+  * [Where to go from here?](#where-to-go-from-here)
+<!-- TOC -->
 # PLY (Python Lex-Yacc)
 
 本文概述使用 PLY 进行词法分析和语法分析。
@@ -232,7 +282,7 @@ yacc 中几乎所有可行的功能在 PLY 中都应该能够实现。
 添加注释。如果您的模式包含空格，请确保使用 `\s` 。如果您需要匹配 `#` 字符，请使用
 `[#]` 。
 
-在构建主（？这里翻译不太对）正则表达式时，规则的添加顺序如下：
+在构建主（译：？这里翻译不太对）正则表达式时，规则的添加顺序如下：
 
 1.  由函数定义的所有符号都将按照它们在词法分析器文件中的出现顺序进行添加。
 2.  对由字符串定义的符号会将排序后的内容添加进来（即先添加长度较长的表达式）。
@@ -285,11 +335,6 @@ identifier and do a special name lookup in a function like this:
         ...
         return t
 
-It is important to note that storing data in other attribute names is
-*not* recommended. The `yacc.py` module only exposes the contents of the
-`value` attribute. Thus, accessing other attributes may be unnecessarily
-awkward. If you need to store multiple values on a token, assign a
-tuple, dictionary, or instance to `value`.
 需要特别注意的是，在其他属性名称中存储数据是不被推荐的。`yacc.py` 模块仅暴露 `value` 
 属性的内容。因此，访问其他属性可能会显得非常不方便。如果需要在一个标记上存储多个值，可以
 将一个元组、字典或实例赋值给 `value` 。
@@ -307,11 +352,6 @@ tuple, dictionary, or instance to `value`.
 
     t_ignore_COMMENT = r'\#.*'
 
-Be advised that if you are ignoring many different kinds of text, you
-may still want to use functions since these provide more precise control
-over the order in which regular expressions are matched (i.e., functions
-are matched in order of specification whereas strings are sorted by
-regular expression length).
 请注意，如果你忽略不同种类的文本，您可能仍需要使用函数，因为这些函数能提供更精确的控制，
 以确保正则表达式匹配的顺序（即函数是按照定义的顺序进行匹配的，而字符串则是按照正则表达式的
 长度进行排序的）。
@@ -352,13 +392,6 @@ regular expression length).
 为空格定义一个正则表达式规则，但使用`t_ignore`能提供显著更高的词法解析性能，因为它被
 当作一个特殊情况处理，并且其检查方式比常规的正则表达式规则要高效得多。
 
-The characters given in `t_ignore` are not ignored when such characters
-are part of other regular expression patterns. For example, if you had a
-rule to capture quoted text, that pattern can include the ignored
-characters (which will be captured in the normal way). The main purpose
-of `t_ignore` is to ignore whitespace and other padding between the
-tokens that you actually want to parse.
-
 在 `t_ignore` 中指定的字符在这些字符属于其他正则表达式模式的一部分时不会被忽略。
 例如，如果有一个规则用于捕获带引号的文本，那么该模式可以包含被忽略的字符（这些字符
 将以常规方式被捕获）。`t_ignore` 的主要用途是忽略您实际想要解析的符号之间的空白
@@ -380,9 +413,6 @@ tokens that you actually want to parse.
 
 当返回一个字面字符符号时，其`type`和`value`属性都会被设置为该字符本身。例如，`'+'`。
 
-It\'s possible to write token functions that perform additional actions
-when literals are matched. However, you\'ll need to set the token type
-appropriately. For example:
 可以编写一些符号函数，以便在匹配到特定的字面值时执行额外的操作。
 不过，您需要正确设置标记类型。例如：
 
@@ -400,26 +430,21 @@ appropriately. For example:
 
 ### 错误处理
 
-The `t_error()` function is used to handle lexing errors that occur when
-illegal characters are detected. In this case, the `t.value` attribute
-contains the rest of the input string that has not been tokenized. In
-the example, the error function was defined as follows:
+`t_error()` 函数用于处理在检测到非法字符时出现的词法错误。在这种情况下，`t.value` 
+属性包含了尚未被分词处理的输入字符串的剩余部分。在示例中，错误处理函数的定义如下：
 
     # Error handling rule
     def t_error(t):
         print("Illegal character '%s'" % t.value[0])
         t.lexer.skip(1)
 
-In this case, we print the offending character and skip ahead one
-character by calling `t.lexer.skip(1)`.
+在这种情况下，我们会打印出错误字符，并通过调用 `t.lexer.skip(1)` 机制跳过下一个字符。
 
 ### 换行处理
 
-The `t_eof()` function is used to handle an end-of-file (EOF) condition
-in the input. As input, it receives a token type `'eof'` with the
-`lineno` and `lexpos` attributes set appropriately. The main use of this
-function is provide more input to the lexer so that it can continue to
-parse. Here is an example of how this works:
+`t_eof()` 函数被用于处理输入中的文件结束（EOF）情况。在输入中，它接收一个符号类型为 `'eof'` 
+的参数，并将 `lineno` 和 `lexpos` 属性设置为适当的值。此函数的主要用途是为词法分析器提供
+更多输入，以便其能够继续解析。以下是其工作方式的一个示例：
 
     # EOF handling rule
     def t_eof(t):
@@ -430,34 +455,28 @@ parse. Here is an example of how this works:
             return t.lexer.token()
         return None
 
-The EOF function should return the next available token (by calling
-`t.lexer.token())` or `None` to indicate no more data. Be aware that
-setting more input with the `t.lexer.input()` method does NOT reset
-the lexer state or the `lineno` attribute used for position tracking.
-The `lexpos` attribute is reset so be aware of that if you\'re using it
-in error reporting.
+EOF 函数应返回下一个可用的符号（通过调用 `t.lexer.token()` 来实现）或者返回 `None` 
+以表示没有更多数据。请注意，使用 `t.lexer.input()` 方法添加更多输入并不会重置解析器状
+态或用于位置跟踪的 `lineno` 属性。`lexpos` 属性会被重置，所以在错误报告中使用该属性时
+请务必注意这一点。
 
-### Building and using the lexer
+### 构建并使用词法分析器
 
-To build the lexer, the function `lex.lex()` is used. For example:
+要构建词法分析器，需要使用函数 `lex.lex()` 。例如：
 
     lexer = lex.lex()
 
-This function uses Python reflection (or introspection) to read the
-regular expression rules out of the calling context and build the lexer.
-Once the lexer has been built, two methods can be used to control the
-lexer:
+此功能利用 Python 的反射（或内检）功能从调用环境中读取正则表达式规则，并构建词法分析器。
+一旦词法分析器构建完成，就可以使用两种方法来控制该词法分析器：
 
-`lexer.input(data)`. Reset the lexer and store a new input string.
+`lexer.input(data)`。重置解析器并存储新的输入字符串。
 
-`lexer.token()`. Return the next token. Returns a special `LexToken`
-instance on success or None if the end of the input text has been
-reached.
+`lexer.token()` 返回下一个符号。成功时会返回一个特殊的 `LexToken` 实例，
+若已到达输入文本的末尾则返回 None 。
 
-### The \@TOKEN decorator
+### \@TOKEN 装饰器
 
-In some applications, you may want to define tokens as a series of more
-complex regular expression rules. For example:
+在某些应用场景中，您可能希望将令牌定义为一系列更为复杂的正则表达式规则。例如：
 
     digit            = r'([0-9])'
     nondigit         = r'([_A-Za-z])'
@@ -467,10 +486,8 @@ complex regular expression rules. For example:
         # want docstring to be identifier above. ?????
         ...
 
-In this case, we want the regular expression rule for `ID` to be one of
-the variables above. However, there is no way to directly specify this
-using a normal documentation string. To solve this problem, you can use
-the `@TOKEN` decorator. For example:
+在这种情况下，我们希望 `ID` 的正则表达式规则属于上述变量之一。然而，无法通过常规的文档字
+符串直接指定这一点。为了解决这个问题，您可以使用 `@TOKEN` 装饰器。例如：
 
     from ply.lex import TOKEN
 
@@ -478,39 +495,32 @@ the `@TOKEN` decorator. For example:
     def t_ID(t):
         ...
 
-This will attach `identifier` to the docstring for `t_ID()` allowing
-`lex.py` to work normally. Naturally, you could use `@TOKEN` on all
-functions as an alternative to using docstrings.
+这会将`identifier`附加到 `t_ID()` 的文档字符串中，从而使 `lex.py` 能够正常运行。当然，
+您也可以对所有函数使用 `@TOKEN` 作为使用文档字符串的替代方法。(译：这个可能需要试一下)
 
-### Debugging
+### 调试
 
-For the purpose of debugging, you can run `lex()` in a debugging mode as
-follows:
+为了进行调试，您可以以调试模式运行 `lex()` 函数，具体操作如下：
 
     lexer = lex.lex(debug=True)
 
-This will produce various sorts of debugging information including all
-of the added rules, the master regular expressions used by the lexer,
-and tokens generating during lexing.
+这将生成各种类型的调试信息，包括所有添加的规则、词法分析器所使用的主正则表达式以及在词法分
+析过程中生成的标记。
 
-In addition, `lex.py` comes with a simple main function which will
-either tokenize input read from standard input or from a file specified
-on the command line. To use it, put this in your lexer:
+此外，`lex.py` 附带了一个简单的主函数，该函数能够对从标准输入读取的输入内容或从命令行指
+定的文件中读取的内容进行分词处理。要使用它，请将以下代码段添加到你的分词器中：
 
     if __name__ == '__main__':
          lex.runmain()
 
-Please refer to the \"Debugging\" section near the end for some more
-advanced details of debugging.
+请参阅文末的\"调试\"部分，以获取更多有关调试的高级细节说明。
 
-### Alternative specification of lexers
+### 词法解析器的可选规范
 
-As shown in the example, lexers are specified all within one Python
-module. If you want to put token rules in a different module from the
-one in which you invoke `lex()`, use the `module` keyword argument.
+如示例所示，词法分析器全部都在一个 Python 模块中进行定义。如果您想将标记规则放在与调
+用 `lex()` 的模块不同的模块中，请使用 `module` 关键字参数。
 
-For example, you might have a dedicated module that just contains the
-token rules:
+例如，你可能会有一个专门的模块，其中仅包含符号规则：
 
     # module: tokrules.py
     # This module just contains the lexing rules
@@ -553,9 +563,8 @@ token rules:
         print("Illegal character '%s'" % t.value[0])
         t.lexer.skip(1)
 
-Now, if you wanted to build a tokenizer from these rules from within a
-different module, you would do the following (shown for Python
-interactive mode):
+现在，如果您想在另一个模块中根据这些规则构建一个分词器，您可以按照以下步骤操作
+（此处以 Python 交互模式为例）：
 
     >>> import tokrules
     >>> lexer = lex.lex(module=tokrules)
@@ -570,8 +579,7 @@ interactive mode):
     None
     >>>
 
-The `module` option can also be used to define lexers from instances of
-a class. For example:
+`module` 选项还可用于通过类的实例来定义解析器。例如：
 
     import ply.lex as lex
 
@@ -633,18 +641,13 @@ a class. For example:
     m.build()           # Build the lexer
     m.test("3 + 4")     # Test it
 
-When building a lexer from class, *you should construct the lexer from
-an instance of the class*, not the class object itself. This is because
-PLY only works properly if the lexer actions are defined by
-bound-methods.
+在使用类来构建词法分析器时，*您应当从该类的实例而非类对象本身来构建词法分析器*。这是因为
+PLY 只有在词法操作由绑定方法定义的情况下才能正常工作。
 
-When using the `module` option to `lex()`, PLY collects symbols from the
-underlying object using the `dir()` function. There is no direct access
-to the `__dict__` attribute of the object supplied as a module value.
+在使用 `lex()` 函数的 `module` 选项时，PLY 会通过 `dir()` 函数从底层对象中收集符号。
+但无法直接访问作为模块值提供的对象的 `__dict__` 属性。
 
-Finally, if you want to keep things nicely encapsulated, but don\'t want
-to use a full-fledged class definition, lexers can be defined using
-closures. For example:
+最后，如果您希望将内容妥善封装起来，但又不想使用完整的类定义，那么可以使用闭包来定义解析器。例如：
 
     import ply.lex as lex
 
@@ -690,21 +693,16 @@ closures. For example:
         # Build the lexer from my environment and return it    
         return lex.lex()
 
-Important note: If you are defining a lexer using a class or closure, be
-aware that PLY still requires you to only define a single lexer per
-module (source file). There are extensive validation/error checking
-parts of the PLY that may falsely report error messages if you don\'t
-follow this rule.
+重要提示：如果您使用类或闭包来定义词法分析器，请注意，PLY 仍然要求您每个模块
+（源文件）仅定义一个词法分析器。PLY 中有大量验证/错误检查部分，如果不遵循此
+规则，可能会错误地报告错误消息。
 
-### Maintaining state
+### 状态的维护
 
-In your lexer, you may want to maintain a variety of state information.
-This might include mode settings, symbol tables, and other details. As
-an example, suppose that you wanted to keep track of how many NUMBER
-tokens had been encountered.
+在你的词法分析器中，你可能需要保存多种状态信息。这可能包括模式设置、符号表以及其他细节。
+例如，假设你想要记录已经遇到的 NUMBER 标记的数量。
 
-One way to do this is to keep a set of global variables in the module
-where you created the lexer. For example:
+一种实现此目的的方法是在创建词法分析器的模块中定义一组全局变量。例如：
 
     num_count = 0
     def t_NUMBER(t):
@@ -714,10 +712,8 @@ where you created the lexer. For example:
         t.value = int(t.value)    
         return t
 
-If you don\'t like the use of a global variable, another place to store
-information is inside the Lexer object created by `lex()`. To do this, you
-can use the `lexer` attribute of tokens passed to the various rules. For
-example:
+如果您不喜欢使用全局变量，那么还可以将信息存储在由 `lex()` 函数创建的词法分析器的对象内部。
+要做到这一点，您可以使用传递给各种规则的符号的 `lex()` 属性。例如：
 
     def t_NUMBER(t):
         r'\d+'
@@ -728,19 +724,13 @@ example:
     lexer = lex.lex()
     lexer.num_count = 0            # Set the initial count
 
-This latter approach has the advantage of being simple and working
-correctly in applications where multiple instantiations of a given lexer
-exist in the same application. However, this might also feel like a
-gross violation of encapsulation to OO purists. Just to put your mind at
-some ease, all internal attributes of the lexer (with the exception of
-`lineno`) have names that are prefixed by `lex` (e.g.,
-`lexdata`, `lexpos`, etc.). Thus, it is perfectly safe to store
-attributes in the lexer that don\'t have names starting with that prefix
-or a name that conflicts with one of the predefined methods (e.g.,
-`input()`, `token()`, etc.).
+后一种方法的优点在于其简单易行，并且在同一个应用程序中存在给定解析器的多个实例的情况下也能正常
+工作。然而，对于面向对象的纯粹主义者来说，这可能看起来是对封装的严重违背。为了让您安心，解析器
+的所有内部属性（除了 `lineno` 之外）都以 `lex` 为前缀命名（例如，`lexdata`、`lexpos` 
+等）。因此，将那些名称不以该前缀开头或与预定义方法（如 `input()`、`token()` 等）冲突的属性
+存储在解析器中是完全安全的。
 
-If you don\'t like assigning values on the lexer object, you can define
-your lexer as a class as shown in the previous section:
+如果您不想在词法解析器对象上赋值，您可以像上一节中所示那样将词法解析器定义为一个类：
 
     class MyLexer:
         ...
@@ -756,11 +746,10 @@ your lexer as a class as shown in the previous section:
         def __init__(self):
             self.num_count = 0
 
-The class approach may be the easiest to manage if your application is
-going to be creating multiple instances of the same lexer and you need
-to manage a lot of state.
+如果您的应用程序需要创建多个相同类型的词法分析器实例，并且需要管理
+大量状态的话，那么采用类方法可能会是最容易管理的方式。
 
-State can also be managed through closures. For example:
+状态也可以通过闭包来进行管理。例如：
 
     def MyLexer():
         num_count = 0
@@ -773,110 +762,85 @@ State can also be managed through closures. For example:
             return t
         ...
 
-### Lexer cloning
+### 克隆Lexer
 
 If necessary, a lexer object can be duplicated by invoking its `clone()`
 method. For example:
+如果需要，可以通过调用其`clone()`方法来复制一个词法分析器对象。例如：
 
     lexer = lex.lex()
     ...
     newlexer = lexer.clone()
 
-When a lexer is cloned, the copy is exactly identical to the original
-lexer including any input text and internal state. However, the clone
-allows a different set of input text to be supplied which may be
-processed separately. This may be useful in situations when you are
-writing a parser/compiler that involves recursive or reentrant
-processing. For instance, if you needed to scan ahead in the input for
-some reason, you could create a clone and use it to look ahead. Or, if
-you were implementing some kind of preprocessor, cloned lexers could be
-used to handle different input files.
+当一个词法分析器被克隆时，其副本与原始词法分析器完全相同，包括任何输入文本和内部状态。
+然而，该克隆允许提供不同的输入文本集，这些文本可以单独进行处理。这在您编写涉及递归
+或可重入处理的解析器/编译器时可能非常有用。例如，如果出于某种原因需要提前扫描输入内容，
+您可以创建一个克隆并使用它来进行提前扫描。或者，如果您正在实现某种重处理器，可以使用
+克隆来处理不同的输入文件。
 
-Creating a clone is different than calling `lex.lex()` in that PLY
-doesn\'t regenerate any of the internal tables or regular expressions.
+创建克隆与调用 `lex.lex()` 有所不同，因为 PLY 不会重新生成任何内部表或正则表达式。
 
-Special considerations need to be made when cloning lexers that also
-maintain their own internal state using classes or closures. Namely, you
-need to be aware that the newly created lexers will share all of this
-state with the original lexer. For example, if you defined a lexer as a
-class and did this:
+在对同时使用类或闭包来维护自身内部状态的解析器进行克隆时，需要特别注意一些事项。具体来说，
+您需要明白新创建的解析器将与原始解析器共享所有这些状态。例如，如果您将解析器定义为一个类，
+并执行以下操作：
 
     m = MyLexer()
     a = lex.lex(object=m)      # Create a lexer
 
     b = a.clone()              # Clone the lexer
 
-Then both `a` and `b` are going to be bound to the same object `m` and
-any changes to `m` will be reflected in both lexers. It\'s important to
-emphasize that `clone()` is only meant to create a new lexer that reuses
-the regular expressions and the environment of another lexer. If you need to
-make a totally new copy of a lexer, then call `lex()` again.
+然后，变量 `a` 和 `b` 都将被绑定到同一个对象 `m` 上，对 `m` 的任何更改都会反映在两个解
+析器中。需要强调的是，`clone()` 仅用于创建一个新的解析器，该解析器会复用另一个解析器的正
+则表达式和环境。如果您需要完全复制一个解析器，则需要再次调用 `lex()` 。
 
-### Internal lexer state
+### 词法解析器的内部状态
 
-A Lexer object `lexer` has a number of internal attributes that may be
-useful in certain situations:
+一个名为`lexer`的词法分析器对象具有若干内部属性，在某些情况下这些属性可能会派上用场：
 
 `lexer.lexpos`
 
-:   This attribute is an integer that contains the current position
-    within the input text. If you modify the value, it will change the
-    result of the next call to `token()`. Within token rule functions,
-    this points to the first character *after* the matched text. If the
-    value is modified within a rule, the next returned token will be
-    matched at the new position.
+:   此属性为一个整数，用于表示输入文本中的当前位置。若修改其值，则会改变对 `token()` 
+    函数的下一次调用的结果。在符号规则函数中，此指针指向匹配文本之后的第一个字符。若在规
+    则内部修改该值，则下一次返回的符号将在新的位置进行匹配。
 
 `lexer.lineno`
 
-:   The current value of the line number attribute stored in the lexer.
-    PLY only specifies that the attribute exists\-\--it never sets,
-    updates, or performs any processing with it. If you want to track
-    line numbers, you will need to add code yourself (see the section on
-    line numbers and positional information).
+:   当前存储在词法分析器中的行号属性的值。PLY 仅规定该属性存在——它从不设置、更新或对其进行
+    任何处理。如果您想要跟踪行号，您需要自己添加代码（请参阅关于行号和位置信息的章节）。
 
 `lexer.lexdata`
 
-:   The current input text stored in the lexer. This is the string
-    passed with the `input()` method. It would probably be a bad idea to
-    modify this unless you really know what you\'re doing.
+:   当前存储在词法分析器中的输入文本。这是通过 `input()` 方法传递的字符串。除非您非常清
+    楚自己在做什么，否则最好不要对其进行修改。
 
 `lexer.lexmatch`
 
-:   This is the raw `Match` object returned by the Python `re.match()`
-    function (used internally by PLY) for the current token. If you have
-    written a regular expression that contains named groups, you can use
-    this to retrieve those values.
-	Note: This attribute is only updated when tokens are defined and processed by functions.
+:   这是由 Python 的 `re.match()` 函数（PLY 内部使用的函数）为当前标记返回的原始`Match`
+    对象。如果您编写了包含命名组的正则表达式，就可以使用此对象来获取这些值。
+    注意：此属性仅在通过函数定义和处理符号时才会更新。
 
-### Conditional lexing and start conditions
+### 条件性解析和开始条件
 
-In advanced parsing applications, it may be useful to have different
-lexing states. For instance, you may want the occurrence of a certain
-token or syntactic construct to trigger a different kind of lexing. PLY
-supports a feature that allows the underlying lexer to be put into a
-series of different states. Each state can have its own tokens, lexing
-rules, and so forth. The implementation is based largely on the \"start
-condition\" feature of GNU flex. Details of this can be found at
+在高级解析应用中，设置不同的词法状态可能会很有用。例如，您可能希望某个特定的标记或语法结构
+的出现能够触发一种不同的词法处理方式。PLY 支持一种功能，允许底层的词法解析器进入一系列不同
+的状态。每个状态都可以有自己的标记、词法规则等等。其实现主要基于 GNU flex 的\"start
+condition\"特性。相关详情请见以下内容：
 <https://westes.github.io/flex/manual/Start-Conditions.html>
 
-To define a new lexing state, it must first be declared. This is done by
-including a \"states\" declaration in your lex file. For example:
+要定义一个新的词法状态，首先必须对其进行声明。这可以通过在词法文件中添加\"states\"声明来实现。
+例如：
 
     states = (
        ('foo','exclusive'),
        ('bar','inclusive'),
     )
 
-This declaration declares two states, `'foo'` and `'bar'`. States may be
-of two types; `'exclusive'` and `'inclusive'`. An ``'exclusive'`` state
-completely overrides the default behavior of the lexer. That is, lex
-will only return tokens and apply rules defined specifically for that
-state. An ``'inclusive'`` state adds additional tokens and rules to the
-default set of rules. Thus, lex will return both the tokens defined by
-default in addition to those defined for the ``'inclusive'`` state.
+此声明定义了两个状态，分别为`'foo'`和`'bar'`。状态可分为两种类型：`'exclusive'`和`'inclusive'`。
+一个``'exclusive'``状态会完全取代词法解析器的默认行为。也就是说，lex 只会返回特定于该状态的标记，
+并应用针对该状态定义的规则。一个``'inclusive'``状态会向默认规则集添加额外的标记和规则。
+因此，lex 除了返回默认定义的标记外，还会返回针对“包含型”状态定义的标记。
 
-Once a state has been declared, tokens and rules are declared by
-including the state name in token/rule declaration. For example:
+一旦声明了state，就可以通过在符号/规则声明中包含状态名称来定义令牌和规则。例如：
 
     t_foo_NUMBER = r'\d+'                      # Token 'NUMBER' in state 'foo'        
     t_bar_ID     = r'[a-zA-Z_][a-zA-Z0-9_]*'   # Token 'ID' in state 'bar'
@@ -885,50 +849,42 @@ including the state name in token/rule declaration. For example:
         r'\n'
         t.lexer.lineno += 1
 
-A token can be declared in multiple states by including multiple state
-names in the declaration. For example:
+可以通过在声明中包含多个状态名称来为一个符号定义多个状态。例如：
 
     t_foo_bar_NUMBER = r'\d+'         # Defines token 'NUMBER' in both state 'foo' and 'bar'
 
-Alternative, a token can be declared in all states using the \'ANY\' in
-the name:
+另外，可以通过在名称中使用 \'ANY\'关键字在所有状态中声明一个标记：
 
     t_ANY_NUMBER = r'\d+'         # Defines a token 'NUMBER' in all states
 
-If no state name is supplied, as is normally the case, the token is
-associated with a special state `'INITIAL'`. For example, these two
-declarations are identical:
+如果未提供任何状态名（这是通常的情况），那么该标记将与一个特殊的状态`'INITIAL'`相关联。
+例如，以下这两段声明是完全相同的：
 
     t_NUMBER = r'\d+'
     t_INITIAL_NUMBER = r'\d+'
 
-States are also associated with the special `t_ignore`, `t_error()`, and
-`t_eof()` declarations. For example, if a state treats these
-differently, you can declare:
+此外，状态还与特殊的`t_ignore`、`t_error()`和`t_eof()`声明相关联。例如，如果某个状态
+对这些情况有不同的处理方式，您可以这样声明：
 
     t_foo_ignore = " \t\n"       # Ignored characters for state 'foo'
 
     def t_bar_error(t):          # Special error handler for state 'bar'
         pass 
 
-By default, lexing operates in the `'INITIAL'` state. This state
-includes all of the normally defined tokens. For users who aren\'t using
-different states, this fact is completely transparent. If, during lexing
-or parsing, you want to change the lexing state, use the `begin()`
-method. For example:
+默认情况下，词法分析处于`'INITIAL'`状态。此状态包含了所有通常定义的标记。对于未使用不同状态的用户
+而言，这一事实完全不会引起注意。如果在词法分析或解析过程中您想要更改词法分析状态，请使用 `begin()` 方法。例如：
 
     def t_begin_foo(t):
         r'start_foo'
         t.lexer.begin('foo')             # Starts 'foo' state
 
-To get out of a state, you use `begin()` to switch back to the initial
-state. For example:
+要退出当前状态，可以使用 `begin()` 方法切换回初始状态。例如：
 
     def t_foo_end(t):
         r'end_foo'
         t.lexer.begin('INITIAL')        # Back to the initial state
 
-The management of states can also be done with a stack. For example:
+状态的管理也可以通过栈来实现。例如：
 
     def t_begin_foo(t):
         r'start_foo'
@@ -938,19 +894,13 @@ The management of states can also be done with a stack. For example:
         r'end_foo'
         t.lexer.pop_state()                   # Back to the previous state
 
-The use of a stack would be useful in situations where there are many
-ways of entering a new lexing state and you merely want to go back to
-the previous state afterwards.
+在存在多种方式可以进入新的词法状态，并且您只是希望之后能返回到之前状态的情况下，使用栈会非常有用。
 
-An example might help clarify. Suppose you were writing a parser and you
-wanted to grab sections of arbitrary C code enclosed by curly braces.
-That is, whenever you encounter a starting brace ``{``, you want to read
-all of the enclosed code up to the ending brace ``}`` and return it as a
-string. Doing this with a normal regular expression rule is nearly (if
-not actually) impossible. This is because braces can be nested and can
-be included in comments and strings. Thus, matching up to the first
-matching ``}`` character isn\'t good enough. Here is how you might use
-lexer states to do this:
+举个例子或许能更清楚地说明问题。假设你正在编写一个解析器，并且想要提取由花括号括起来的任意 C 
+代码段。也就是说，每当遇到一个起始花括号``{``时，你就希望读取其内部的所有代码直到结束花括号``}``，
+并将其作为字符串返回。使用普通的正则表达式规则来实现这一点几乎是不可能的（即便实际上也是不可能的）。
+这是因为花括号可以嵌套，并且可以包含在注释和字符串中。因此，仅仅匹配到第一个匹配的``}``字符是不够的。
+以下是您可以如何使用词法状态来实现这一点的方法：
 
 	import ply.lex as lex
 
@@ -1018,55 +968,40 @@ lexer states to do this:
         print(tok)
 
 
-In this example, the occurrence of the first ``{`` causes the lexer to
-record the starting position and enter a new state `'ccode'`. A
-collection of rules then match various parts of the input that follow
-(comments, strings, etc.). All of these rules merely discard the token
-(by not returning a value). However, if the closing right brace is
-encountered, the rule `t_ccode_rbrace` collects all of the code (using
-the earlier recorded starting position), stores it, and returns a token
-\'CCODE\' containing all of that text. When returning the token, the
-lexing state is restored back to its initial state.
+在该示例中，第一个``{``符号的出现致使词法分析器记录下起始位置，并进入新的状态`'ccode'`。
+随后会有一系列规则来匹配输入中后续的各种部分（注释、字符串等）。这些规则只是丢弃该标记
+（不返回任何值）。然而，如果遇到右大括号，则规则 `t_ccode_rbrace` 会收集所有代码
+（使用之前记录的起始位置），将其存储起来，并返回一个标记 'CCODE'，其中包含所有这些文本。
+在返回该标记时，解析状态会恢复到初始状态。
 
-### Miscellaneous Issues
+### 其它
+ 
+-   词法分析器要求输入以单个输入字符串的形式提供。由于大多数机器的内存都绰绰有余，因此这通
+    常不会造成性能问题。然而，这意味着词法分析器目前无法用于诸如打开的文件或套接字之类的流数据。
+    这一限制主要是由于使用 `re` 模块所导致的。您或许可以通过实现适当的 `def t_eof()` 结束
+    文件处理规则来解决这个问题。这里的主要复杂之处在于，您可能需要确保将数据以某种方式提供给词法
+    分析器，以避免在标记中间进行分割。
 
--   The lexer requires input to be supplied as a single input string.
-    Since most machines have more than enough memory, this rarely
-    presents a performance concern. However, it means that the lexer
-    currently can\'t be used with streaming data such as open files or
-    sockets. This limitation is primarily a side-effect of using the
-    `re` module. You might be able to work around this by implementing
-    an appropriate `def t_eof()` end-of-file handling rule. The main
-    complication here is that you\'ll probably need to ensure that data
-    is fed to the lexer in a way so that it doesn\'t split in the
-    middle of a token.
-
--   If you need to supply optional flags to the ``re.compile()`` function,
-    supply the ``reflags`` option to lex. For example:
+-   如果您需要向 ``re.compile()`` 函数提供可选的标志，请向 lex 传递 ``reflags`` 选项。
+    例如：
 
         lex.lex(reflags=re.UNICODE | re.VERBOSE)
 
-    Note: by default, `reflags` is set to `re.VERBOSE`. If you provide
-    your own flags, you may need to include this for PLY to preserve its
-    normal behavior.
+    注意：默认情况下，`reflags` 被设置为 `re.VERBOSE`。如果您自定义了标志，则可能需要
+    将此设置包含在内，以便 PLY 能够保持其正常行为。
 
--   If you are going to create a hand-written lexer and you plan to use
-    it with `yacc.py`, it only needs to conform to the following
-    requirements:
+-   如果你打算创建一个手写词法分析器，并且计划将其与 `yacc.py` 结合使用，那么它只需要满
+    足以下这些要求：
 
-    1.  It must provide a `token()` method that returns the next token
-        or `None` if no more tokens are available.
-    2.  The `token()` method must return an object `tok` that has `type`
-        and `value` attributes. If line number tracking is being used,
-        then the token should also define a `lineno` attribute.
+    1.  必须提供一个 `token()` 方法，该方法能够返回下一个标记，如果没有更多标记则返回 `None` 。
+    2.  `token()` 方法必须返回一个具有 `type` 和 `value` 属性的对象 `tok` 。 
+        如果正在使用行号跟踪功能，那么该标记还应定义一个 `lineno` 属性。
 
-## Parsing basics
+## 解析基础
 
-`yacc.py` is used to parse language syntax. Before showing an example,
-there are a few important bits of background that must be mentioned.
-First, *syntax* is usually specified in terms of a BNF grammar. For
-example, if you wanted to parse simple arithmetic expressions, you might
-first write an unambiguous grammar specification like this:
+`yacc.py` 用于解析语言的语法结构。在展示示例之前，有必要先提及一些重要的背景信息。
+首先，*语法*通常是以 BNF 语法的形式来定义的。例如，如果您想要解析简单的算术表达式，您
+可能会首先编写一个清晰明确的语法规范，如下所示：
 
     expression : expression + term
                | expression - term
@@ -1079,19 +1014,13 @@ first write an unambiguous grammar specification like this:
     factor     : NUMBER
                | ( expression )
 
-In the grammar, symbols such as `NUMBER`, `+`, `-`, `*`, and `/` are
-known as *terminals* and correspond to input tokens. Identifiers such as
-`term` and `factor` refer to grammar rules comprised of a collection of
-terminals and other rules. These identifiers are known as
-*non-terminals*.
+在语法中，诸如 `NUMBER`, `+`, `-`, `*`, 和 `/` 这样的符号被称为*terminals*，
+它们对应于输入的标记。诸如`term`和`factor`这样的标识符则代表由一系列终结符及其他规则组成的语法规则。
+这些标识符被称为*non-terminals*。
 
-The semantic behavior of a language is often specified using a technique
-known as syntax directed translation. In syntax directed translation,
-attributes are attached to each symbol in a given grammar rule along
-with an action. Whenever a particular grammar rule is recognized, the
-action describes what to do. For example, given the expression grammar
-above, you might write the specification for a simple calculator like
-this:
+一种语言的语义行为通常通过一种称为语法导向翻译的技术来加以规定。在语法导向翻译中，
+会在给定的语法规则中的每个符号上附加属性以及相应的操作。每当识别到特定的语法规则时，
+该操作就会说明要执行的操作。例如，对于上述表达式语法，您可以这样为一个简单的计算器编写规范：
 
     Grammar                             Action
     --------------------------------    -------------------------------------------- 
@@ -1106,26 +1035,17 @@ this:
     factor      : NUMBER                factor.val = int(NUMBER.lexval)
                 | ( expression )        factor.val = expression.val
 
-A good way to think about syntax directed translation is to view each
-symbol in the grammar as a kind of object. Associated with each symbol
-is a value representing its \"state\" (for example, the `val` attribute
-above). Semantic actions are then expressed as a collection of functions
-or methods that operate on the symbols and associated values.
+一种思考语法导向翻译的好方法是将语法中的每个符号视为一种对象。与每个符号相关联的是一个表
+示其\"state\"的值（例如，上面的 `val` 属性）。语义动作则表示为一组作用于符号及其相关
+值的函数或方法。
 
-Yacc uses a parsing technique known as LR-parsing or shift-reduce
-parsing. LR parsing is a bottom up technique that tries to recognize the
-right-hand-side of various grammar rules. Whenever a valid
-right-hand-side is found in the input, the appropriate action code is
-triggered and the grammar symbols are replaced by the grammar symbol on
-the left-hand-side.
+Yacc 采用一种被称为 LR 分析或移位-归约分析的解析技术。LR 分析是一种自下而上的技术，旨
+在识别各种语法规则的右侧内容。每当在输入中找到有效的右侧内容时，就会触发相应的操作代码，
+并将语法符号替换为左侧的语法符号。
 
-LR parsing is commonly implemented by shifting grammar symbols onto a
-stack and looking at the stack and the next input token for patterns
-that match one of the grammar rules. The details of the algorithm can be
-found in a compiler textbook, but the following example illustrates the
-steps that are performed if you wanted to parse the expression
-`3 + 5 * (10 - 20)` using the grammar defined above. In the example, the
-special symbol `$` represents the end of input:
+LR 分析通常通过将语法符号压入栈中，并查看栈以及下一个输入标记来寻找与语法规则匹配的模式来
+实现。该算法的详细内容可在编译器教材中找到，但以下示例说明了如果要使用上述定义的语法来解析
+表达式“3 + 5 * (10 - 20)”时所执行的步骤。在该示例中，特殊符号“$”表示输入的结束标志：
 
     Step Symbol Stack           Input Tokens            Action
     ---- ---------------------  ---------------------   -------------------------------
@@ -1155,37 +1075,26 @@ special symbol `$` represents the end of input:
     24   expr                                      $    Reduce expr
     25                                             $    Success!
 
-When parsing the expression, an underlying state machine and the current
-input token determine what happens next. If the next token looks like
-part of a valid grammar rule (based on other items on the stack), it is
-generally shifted onto the stack. If the top of the stack contains a
-valid right-hand-side of a grammar rule, it is usually \"reduced\" and
-the symbols replaced with the symbol on the left-hand-side. When this
-reduction occurs, the appropriate action is triggered (if defined). If
-the input token can\'t be shifted and the top of stack doesn\'t match
-any grammar rules, a syntax error has occurred and the parser must take
-some kind of recovery step (or bail out). A parse is only successful if
-the parser reaches a state where the symbol stack is empty and there are
-no more input tokens.
+在解析表达式时，底层的状态机和当前输入的标记将决定接下来会发生什么。如果下一个标记看起来像
+是一个有效的语法规则的一部分（基于栈上的其他项目），通常会将其移到栈中。如果栈顶包含一个语
+法规则的有效右侧部分，通常会对其进行“简化”，并将左侧的符号替换为右侧的符号。当这种简化发生
+时，会触发相应的操作（如果已定义）。如果输入标记无法移除且栈顶与任何语法规则都不匹配，就会
+发生语法错误，解析器必须采取某种恢复步骤（或终止）。只有当解析器到达符号栈为空且没有更多输
+入标记的状态时，解析才是成功的。
 
-It is important to note that the underlying implementation is built
-around a large finite-state machine that is encoded in a collection of
-tables. The construction of these tables is non-trivial and beyond the
-scope of this discussion. However, subtle details of this process
-explain why, in the example above, the parser chooses to shift a token
-onto the stack in step 9 rather than reducing the rule
-`expr : expr + term`.
+需要特别注意的是，其底层实现是基于一个大型的有限状态机构建的，该状态机被编码在一系列表格
+中。这些表格的构建过程并不简单，超出了本次讨论的范围。然而，这一过程中的细微之处能够解释
+为何在上述示例中，解析器在第 9 步选择将一个标记推到栈中，而不是对规则“expr ： expr + term”
+进行归约。
 
 ## Yacc
 
-The `ply.yacc` module implements the parsing component of PLY. The name
-\"yacc\" stands for \"Yet Another Compiler Compiler\" and is borrowed
-from the Unix tool of the same name.
+`ply.yacc` 模块实现了 PLY 的解析组件。该模块的名称“yacc”源自“Yet Another Compiler Compiler”
+（又一个编译器编译器），这一名称借鉴自 Unix 系统中的同名工具。
 
-### An example
+### 示例
 
-Suppose you wanted to make a grammar for simple arithmetic expressions
-as previously described. Here is how you would do it with `yacc.py`:
+假设您想要按照之前所述的方式为简单的算术表达式创建一个语法规则。下面是使用 `yacc.py` 实现的方法：
 
     # Yacc example
 
@@ -1242,15 +1151,14 @@ as previously described. Here is how you would do it with `yacc.py`:
        result = parser.parse(s)
        print(result)
 
-Note: ``calclex.py`` can be found at https://github.com/dabeaz/ply/blob/master/test/calclex.py
+注意：“calclex.py”文件可在以下网址获取：
+https://github.com/a200638012/ply/blob/master/tests/calclex.py（这个文件被更新了，内容有区别）
 
-In this example, each grammar rule is defined by a Python function where
-the docstring to that function contains the appropriate context-free
-grammar specification. The statements that make up the function body
-implement the semantic actions of the rule. Each function accepts a
-single argument `p` that is a sequence containing the values of each
-grammar symbol in the corresponding rule. The values of `p[i]` are
-mapped to grammar symbols as shown here:
+
+在该示例中，每个语法规则均由一个 Python 函数来定义，该函数的文档字符串包含了相应的无上下文语
+法规范说明。构成函数主体的语句实现了该规则的语义操作。每个函数都接受一个名为 `p` 的单一参
+数，该参数是一个序列，其中包含了对应于该规则中的每个语法符号的值。`p[i]` 的值会按照如下方
+式映射到语法符号上：
 
     def p_expression_plus(p):
         'expression : expression PLUS term'
@@ -1259,60 +1167,43 @@ mapped to grammar symbols as shown here:
 
         p[0] = p[1] + p[3]
 
-For tokens, the \"value\" of the corresponding `p[i]` is the *same* as
-the `p.value` attribute assigned in the lexer module. For non-terminals,
-the value is determined by whatever is placed in `p[0]` when rules are
-reduced. This value can be anything at all. However, it probably most
-common for the value to be a simple Python type, a tuple, or an
-instance. In this example, we are relying on the fact that the `NUMBER`
-token stores an integer value in its value field. All of the other rules
-perform various types of integer operations and propagate the result.
+对于标记符，其对应的 `p[i]` 的“值”与在词法解析模块中赋给 `p.value` 的属性完全相同。
+对于非终结符，其值由规则简化时放入 `p[0]` 中的内容决定。这个值可以是任何东西。然而，
+通常情况下，其值更可能是简单的 Python 类型、元组或实例。在这个示例中，我们利用了 `NUMBER` 
+标记符在其值字段中存储整数值这一事实。其他所有规则都执行各种类型的整数运算并传播结果。
 
-Note: The use of negative indices have a special meaning in
-yacc\-\--specially `p[-1]` does not have the same value as `p[3]` in
-this example. Please see the section on \"Embedded Actions\" for further
-details.
+注意：在 yacc 中，负指数的使用具有特殊含义——特别是在此示例中，`p[-1]` 的值与 `p[3]` 
+并不相同。有关更多详细信息，请参阅“嵌入式操作”部分。
 
-The first rule defined in the yacc specification determines the starting
-grammar symbol (in this case, a rule for `expression` appears first).
-Whenever the starting rule is reduced by the parser and no more input is
-available, parsing stops and the final value is returned (this value
-will be whatever the top-most rule placed in `p[0]`).
-Note: an alternative starting symbol can be specified using the ``start`` keyword
-argument to ``yacc()``.
+yacc 规范中定义的第一条规则确定了起始语法符号（在本例中，`expression` 这条规则排在首位）。
+每当解析器对起始规则进行归约且没有更多输入时，解析过程就会停止，并返回最终值（该值将是 `p[0]` 
+中放置的最顶层规则的任何值）。注意：可以使用 `yacc()` 函数的 `start` 关键字参数来指定替代
+的起始符号。
 
-The `p_error(p)` rule is defined to catch syntax errors. See the error
-handling section below for more detail.
+“p_error(p)”这一规则的定义目的是用于捕获语法错误。有关更多详细信息，请参阅下面的错误处理部分。
 
-To build the parser, call the `yacc.yacc()` function. This function
-looks at the module and attempts to construct all of the LR parsing
-tables for the grammar you have specified.
+要构建解析器，请调用 `yacc.yacc()` 函数。该函数会查看模块，并尝试根据您指定的语
+法构建所有的 LR 解析表。
 
-If any errors are detected in your grammar specification, `yacc.py` will
-produce diagnostic messages and possibly raise an exception. Some of the
-errors that can be detected include:
+如果在您的语法规范中发现任何错误，`yacc.py` 将会给出诊断信息，并可能引发异常。能够检测到的一
+些错误包括：
 
--   Duplicated function names (if more than one rule function have the
-    same name in the grammar file).
--   Shift/reduce and reduce/reduce conflicts generated by ambiguous
-    grammars.
--   Badly specified grammar rules.
--   Infinite recursion (rules that can never terminate).
--   Unused rules and tokens
--   Undefined rules and tokens
+-   重复的函数名称（如果在语法文件中存在多个规则函数具有相同的名称）。
+-   由不明确的语法所引发的“移位/归约”和“归约/归约”冲突。
+-   不明确的语法规则。
+-   无限递归（永远无法终止的规则）。
+-   未使用的规则和标记符。
+-   未定义的规则和标记。
 
-The next few sections discuss grammar specification in more detail.
+接下来的几个部分将更详细地探讨语法规范的相关内容。
 
-The final part of the example shows how to actually run the parser
-created by `yacc()`. To run the parser, you have to call the `parse()`
-with a string of input text. This will run all of the grammar rules and
-return the result of the entire parse. This result return is the value
-assigned to `p[0]` in the starting grammar rule.
+该示例的最后一部分展示了如何实际运行由 `yacc()` 创建的解析器。要运行解析器，您需要调
+用 `parse()` 函数，并传入一段输入文本字符串。这将执行所有的语法规则，并返回整个解析的
+结果。这个结果的返回值就是赋给起始语法规则中的 `p[0]` 的值。
 
-### Combining Grammar Rule Functions
+### 合并语法规则的功能
 
-When grammar rules are similar, they can be combined into a single
-function. For example, consider the two rules in our earlier example:
+当语法规则相似时，它们可以合并为一个单一的功能。例如，参照我们之前示例中的两条规则：
 
     def p_expression_plus(p):
         'expression : expression PLUS term'
@@ -1322,8 +1213,7 @@ function. For example, consider the two rules in our earlier example:
         'expression : expression MINUS term'
         p[0] = p[1] - p[3]
 
-Instead of writing two functions, you might write a single function like
-this:
+与其编写两个函数，不如编写一个这样的单一函数：
 
     def p_expression(p):
         '''expression : expression PLUS term
@@ -1333,9 +1223,7 @@ this:
         elif p[2] == '-':
             p[0] = p[1] - p[3]
 
-In general, the docstring for any given function can contain multiple
-grammar rules. So, it would have also been legal (although possibly
-confusing) to write this:
+一般来说，任何给定函数的文档字符串都可以包含多个语法规则。因此，也可以这样写：
 
     def p_binary_operators(p):
         '''expression : expression PLUS term
@@ -1351,11 +1239,8 @@ confusing) to write this:
         elif p[2] == '/':
             p[0] = p[1] / p[3]
 
-When combining grammar rules into a single function, it is usually a
-good idea for all of the rules to have a similar structure (e.g., the
-same number of terms). Otherwise, the corresponding action code may be
-more complicated than necessary. However, it is possible to handle
-simple cases using ``len()``. For example:
+在将语法规则整合到一个单一的函数中时，通常最好让所有规则具有相似的结构（例如，相同的项数）。
+否则，相应的操作代码可能会比实际所需的更加复杂。不过，对于简单的情况，使用“len()”也是可行的。例如：
 
     def p_expressions(p):
         '''expression : expression MINUS expression
@@ -1365,18 +1250,14 @@ simple cases using ``len()``. For example:
         elif (len(p) == 3):
             p[0] = -p[2]
 
-If parsing performance is a concern, you should resist the urge to put
-too much conditional processing into a single grammar rule as shown in
-these examples. When you add checks to see which grammar rule is being
-handled, you are actually duplicating the work that the parser has
-already performed (i.e., the parser already knows exactly what rule it
-matched). You can eliminate this overhead by using a separate `p_rule()`
-function for each grammar rule.
+如果对解析性能有要求，那么就应当避免在单个语法规则中加入过多的条件处理，就像上述示例中那
+样。当您添加检查以确定正在处理哪条语法规则时，实际上您是在重复解析器已经完成的工作（即，
+解析器已经确切地知道它匹配的是哪条规则）。通过为每条语法规则使用单独的 `p_rule()` 函数，
+您可以消除这种额外开销。
 
 ### Character Literals
 
-If desired, a grammar may contain tokens defined as single character
-literals. For example:
+如果需要的话，语法中可以包含被定义为单个字符常量的标记。例如：
 
     def p_binary_operators(p):
         '''expression : expression '+' term
@@ -1392,44 +1273,39 @@ literals. For example:
         elif p[2] == '/':
             p[0] = p[1] / p[3]
 
-A character literal must be enclosed in quotes such as `'+'`. In
-addition, if literals are used, they must be declared in the
-corresponding `lex` file through the use of a special `literals`
-declaration:
+一个字符常量必须用引号括起来，例如 `'+'` 。此外，如果使用了字面值，那么必须通
+过在相应的“lex”文件中使用特殊的“literals”声明来对其进行定义：
 
     # Literals should be placed in module given to lex()
     literals = ['+','-','*','/']
-Note: make sure that you don't have a duplicate token rule defined like `t_...` to make it work.
+注意：请确保您未定义类似的重复令牌规则，例如 `t_...` ，否则将无法正常运行。
 
-Character literals are limited to a single character. Thus, it is not
-legal to specify literals such as ``<=`` or ``==``. For this, use the
-normal lexing rules (e.g., define a rule such as `t_EQ = r'=='`).
+字符常量仅限于单个字符。因此，不能指定诸如 ``<=`` 或 ``==``这样的字符常量。对此，应使用常规
+的词法解析规则（例如，定义一个规则如 `t_EQ = r'=='`）。
 
-### Empty Productions
 
-`yacc.py` can handle empty productions by defining a rule like this:
+### 空语句处理
+
+`yacc.py` 能够处理空语句项，其方法是定义这样一个规则：
 
     def p_empty(p):
         'empty :'
         pass
 
-Now to use the empty production, use ``empty`` as a symbol. For example:
+现在要使用这个空的生产规则，就用“empty”作为符号即可。例如：
 
     def p_optitem(p):
         'optitem : item'
         '        | empty'
         ...
 
-Note: You can write empty rules anywhere by specifying an empty right
-hand side. However, I personally find that writing an \"empty\" rule and
-using \"empty\" to denote an empty production is easier to read and more
-clearly states your intentions.
+注意：您可以在任何位置编写空规则，只需在右侧指定一个空值即可。不过，我个人认为编写一个“空”
+规则并用“空”来表示空的产生式会更易于阅读，并且能更清晰地表达您的意图。
 
-### Changing the starting symbol
+### 更改起始符号
 
-Normally, the first rule found in a yacc specification defines the
-starting grammar rule (top level rule). To change this, supply a `start`
-specifier in your file. For example:
+通常，在 yacc 规范中首先出现的规则会定义起始语法规则（顶层规则）。若要更改此规则，可在
+您的文件中添加一个“start”说明符。例如：
 
     start = 'foo'
 
@@ -1441,20 +1317,16 @@ specifier in your file. For example:
         'foo : bar X'
     ...
 
-The use of a `start` specifier may be useful during debugging since you
-can use it to have yacc build a subset of a larger grammar. For this
-purpose, it is also possible to specify a starting symbol as an argument
-to `yacc()`. For example:
+在调试过程中使用“start”指定符可能会很有用，因为你可以利用它来让 yacc 构建一个更大的语
+法的一部分。为此，还可以将起始符号作为参数传递给“yacc()”函数来指定。例如：
 
     parser = yacc.yacc(start='foo')
 
-### Dealing With Ambiguous Grammars
+### 应对模糊语法的情况
 
-The expression grammar given in the earlier example has been written in
-a special format to eliminate ambiguity. However, in many situations, it
-is extremely difficult or awkward to write grammars in this format. A
-much more natural way to express the grammar is in a more compact form
-like this:
+前面示例中给出的表达式语法是以一种特殊的格式书写而成，目的是为了消除歧义。然而，在许多情
+况下，以这种格式来书写语法是非常困难或不自然的。更自然的表达语法的方式是采用更简洁的形式，
+比如这样：
 
     expression : expression PLUS expression
                | expression MINUS expression
@@ -1463,17 +1335,12 @@ like this:
                | LPAREN expression RPAREN
                | NUMBER
 
-Unfortunately, this grammar specification is ambiguous. For example, if
-you are parsing the string \"3 \* 4 + 5\", there is no way to tell how
-the operators are supposed to be grouped. For example, does the
-expression mean \"(3 \* 4) + 5\" or is it \"3 \* (4+5)\"?
+不幸的是，这个语法规范存在歧义。例如，如果要解析字符串“3 * 4 + 5”，就无法确定运算符应
+如何进行分组。比如，这个表达式到底是“((3 * 4) + 5)”还是“3 * (4 + 5)”呢？
 
-When an ambiguous grammar is given to `yacc.py` it will print messages
-about \"shift/reduce conflicts\" or \"reduce/reduce conflicts\". A
-shift/reduce conflict is caused when the parser generator can\'t decide
-whether or not to reduce a rule or shift a symbol on the parsing stack.
-For example, consider the string \"3 \* 4 + 5\" and the internal parsing
-stack:
+如果给 `yacc.py` 传递了不明确的语法，它将会打印出有关“移位/归约冲突”或“归约/归约冲突”
+的信息。移位/归约冲突是指解析器生成器无法决定是归约一个规则还是在解析栈上移位一个符号时
+出现的情况。例如，考虑字符串“3 * 4 + 5”以及内部的解析栈：
 
     Step Symbol Stack           Input Tokens            Action
     ---- ---------------------  ---------------------   -------------------------------
@@ -1484,51 +1351,37 @@ stack:
     5    $ expr * 4                             + 5$    Reduce: expression : NUMBER
     6    $ expr * expr                          + 5$    SHIFT/REDUCE CONFLICT ????
 
-In this case, when the parser reaches step 6, it has two options. One is
-to reduce the rule `expr : expr * expr` on the stack. The other option
-is to shift the token `+` on the stack. Both options are perfectly legal
-from the rules of the context-free-grammar.
+在这种情况下，当解析器到达步骤 6 时，它有两种选择。一种是将栈中的规则“expr : expr * expr”进行归约。
+另一种是将栈中的符号“+”移出。根据上下文无关语法的规则，这两种选择都是完全合法的。
 
-By default, all shift/reduce conflicts are resolved in favor of
-shifting. Therefore, in the above example, the parser will always shift
-the `+` instead of reducing. Although this strategy works in many cases
-(for example, the case of \"if-then\" versus \"if-then-else\"), it is
-not enough for arithmetic expressions. In fact, in the above example,
-the decision to shift `+` is completely wrong\-\--we should have reduced
-`expr * expr` since multiplication has higher mathematical precedence
-than addition.
+默认情况下，所有的左移/归约冲突都会倾向于选择左移操作。因此，在上述例子中，解析器总是会将`+`进行左移操作
+，而不是进行归约操作。尽管这种策略在很多情况下都能奏效（例如，“如果-则”与“如果-则-否则”的情况），但对于
+算术表达式来说是不够的。实际上，在上述例子中，将`+`进行左移的决策是完全错误的——我们应该将`expr * expr`
+进行归约，因为乘法的数学优先级高于加法。
 
-To resolve ambiguity, especially in expression grammars, `yacc.py`
-allows individual tokens to be assigned a precedence level and
-associativity. This is done by adding a variable `precedence` to the
-grammar file like this:
+为了解决歧义问题，尤其是在表达式语法中，`yacc.py` 允许为单个标记指定优先级级别和结合性。这是通过在语法
+文件中添加一个名为 `precedence` 的变量来实现的，其添加方式如下：
 
     precedence = (
         ('left', 'PLUS', 'MINUS'),
         ('left', 'TIMES', 'DIVIDE'),
     )
 
-This declaration specifies that `PLUS`/`MINUS` have the same precedence
-level and are left-associative and that `TIMES`/`DIVIDE` have the same
-precedence and are left-associative. Within the `precedence`
-declaration, tokens are ordered from lowest to highest precedence. Thus,
-this declaration specifies that `TIMES`/`DIVIDE` have higher precedence
-than `PLUS`/`MINUS` (since they appear later in the precedence
-specification).
+此声明明确指出，`PLUS`/`MINUS`具有相同的优先级级别，并且是左结合的；而`TIMES`/`DIVIDE`具有
+相同的优先级，并且也是左结合的。在 `precedence`声明中，按照从低到高的优先级顺序对标记进行排序。
+因此，此声明规定 `TIMES`/`DIVIDE`的优先级高于`PLUS`/`MINUS`（因为它们在优先级规范中出现得更
+靠后）。
 
-The precedence specification works by associating a numerical precedence
-level value and associativity direction to the listed tokens. For
-example, in the above example you will get:
+优先级规范的工作原理是为列出的标记赋予一个数值形式的优先级级别值以及一种结合方式。例如，在上述示
+例中，您将得到：
 
     PLUS      : level = 1,  assoc = 'left'
     MINUS     : level = 1,  assoc = 'left'
     TIMES     : level = 2,  assoc = 'left'
     DIVIDE    : level = 2,  assoc = 'left'
 
-These values are then used to attach a numerical precedence value and
-associativity direction to each grammar rule. *This is always determined
-by looking at the precedence of the right-most terminal symbol.* For
-example:
+然后，这些值会被用于为每个语法规则附加一个数值优先级值和结合性方向。*这总是通过查看最右侧
+终结符的优先级来确定的。* 例如：
 
     expression : expression PLUS expression                 # level = 1, left
                | expression MINUS expression                # level = 1, left
@@ -1537,42 +1390,26 @@ example:
                | LPAREN expression RPAREN                   # level = None (not specified)
                | NUMBER                                     # level = None (not specified)
 
-When shift/reduce conflicts are encountered, the parser generator
-resolves the conflict by looking at the precedence rules and
-associativity specifiers.
+当遇到移位/归约冲突时，解析器生成器会通过参考优先级规则和结合性说明来解决这一冲突。
 
-Yacc precedence and associativity of tokens:
+Yacc 符号的优先级和结合性：
 
-1.  If the current token has higher precedence than the rule on the
-    stack, it is shifted.
-2.  If the grammar rule on the stack has higher precedence, the rule is
-    reduced.
-3.  If the current token and the grammar rule have the same precedence,
-    the rule is reduced for left associativity, whereas the token is
-    shifted for right associativity.
-4.  If nothing is known about the precedence, shift/reduce conflicts are
-    resolved in favor of shifting (the default).
+1.  如果当前的符号具有比栈中规则更高的优先级，那么该标记就会被移除。
+2.  如果栈中的语法规则具有更高的优先级，则该规则会被归约。
+3.  如果当前的符号和语法规则具有相同的优先级，那么对于左结合性，该规则将被简化；而对于右
+    结合性，则该标记将被归约。
+4.  如果对优先级关系一无所知，移位/归约 冲突则会优先考虑进行移位操作（这是默认设置）。
 
-For example, if \"expression PLUS expression\" has been parsed and the
-next token is \"TIMES\", the action is going to be a shift because
-\"TIMES\" has a higher precedence level than \"PLUS\". On the other
-hand, if \"expression TIMES expression\" has been parsed and the next
-token is \"PLUS\", the action is going to be reduce because \"PLUS\" has
-a lower precedence than \"TIMES.\"
+例如，如果 \"expression PLUS expression\" 已被解析，并且下一个标记是\"TIMES\"，那么操作将会是“移位”，
+因为\"TIMES\"的优先级高于\"PLUS\"。另一方面，如果\"expression TIMES expression\"已被解析，并且下一个
+标记是\"PLUS\"，那么操作将会是\"PLUS\"，因为“加法”的优先级低于\"TIMES\"。
 
-When shift/reduce conflicts are resolved using the first three
-techniques (with the help of precedence rules), `yacc.py` will report no
-errors or conflicts in the grammar (although it will print some
-information in the `parser.out` debugging file).
+当通过前三种方法（借助优先级规则）解决转换/归约冲突后，`yacc.py` 将不会报告语法中的任何错误或冲突
+（尽管它会在 `parser.out` 调试文件中打印一些信息）。
 
-One problem with the precedence specifier technique is that it is
-sometimes necessary to change the precedence of an operator in certain
-contexts. For example, consider a unary-minus operator in \"3 + 4 \*
--5\". Mathematically, the unary minus is normally given a very high
-precedence\--being evaluated before the multiply. However, in our
-precedence specifier, MINUS has a lower precedence than TIMES. To deal
-with this, precedence rules can be given for so-called \"fictitious
-tokens\" like this:
+优先级指定技术的一个问题在于，在某些情况下有时需要改变某个运算符的优先级。例如，在表达式\"3 + 4 \* -5\"中，
+考虑一下一元减号运算符。从数学角度来看，一元减号通常具有非常高的优先级\--会先于乘法进行计算。然而，在我们的
+优先级指定中，减号的优先级低于乘法。为了解决这个问题，可以为诸如这样的“虚构标记”设定优先级规则：
 
     precedence = (
         ('left', 'PLUS', 'MINUS'),
@@ -1580,27 +1417,20 @@ tokens\" like this:
         ('right', 'UMINUS'),            # Unary minus operator
     )
 
-Now, in the grammar file, we can write our unary minus rule like this:
+现在，在语法文件中，我们可以这样书写一元减号规则：
 
     def p_expr_uminus(p):
         'expression : MINUS expression %prec UMINUS'
         p[0] = -p[2]
 
-In this case, `%prec UMINUS` overrides the default rule
-precedence\--setting it to that of UMINUS in the precedence specifier.
+在这种情况下，`%prec UMINUS` 会覆盖默认的规则优先级\--将其设置为优先级说明符中 UMINUS 的优先级。
 
-At first, the use of UMINUS in this example may appear very confusing.
-UMINUS is not an input token or a grammar rule. Instead, you should
-think of it as the name of a special marker in the precedence table.
-When you use the `%prec` qualifier, you\'re telling yacc that you want
-the precedence of the expression to be the same as for this special
-marker instead of the usual precedence.
+首先，在这个示例中使用 UMINUS 可能会让人感到非常困惑。UMINUS 并非输入标记或语法规则。相反，您应该
+将其视为优先级表中一个特殊标记的名称。当您使用 `%prec` 限定符时，您是在告诉 yacc 您希望表达式的优
+先级与这个特殊标记的优先级相同，而不是通常的优先级。
 
-It is also possible to specify non-associativity in the `precedence`
-table. This would be used when you *don\'t* want operations to chain
-together. For example, suppose you wanted to support comparison
-operators like `<` and `>` but you didn\'t want to allow combinations
-like `a < b < c`. To do this, specify a rule like this:
+还可以在`precedence`表中指定非结合性。这种设置适用于您不想让操作相互串联的情况。例如，假设您希望支持像“<”和“>”
+这样的比较运算符，但又不想允许像“a < b < c”这样的组合。要实现这一点，可以设定这样的规则：
 
     precedence = (
         ('nonassoc', 'LESSTHAN', 'GREATERTHAN'),  # Nonassociative operators
@@ -1609,16 +1439,11 @@ like `a < b < c`. To do this, specify a rule like this:
         ('right', 'UMINUS'),            # Unary minus operator
     )
 
-If you do this, the occurrence of input text such as `a < b < c` will
-result in a syntax error. However, simple expressions such as `a < b`
-will still be fine.
+如果您这样做，输入文本如`a < b < c`就会导致语法错误。但像`a < b`这样的简单表达式则仍不会出错。
 
-Reduce/reduce conflicts are caused when there are multiple grammar rules
-that can be applied to a given set of symbols. This kind of conflict is
-almost always bad and is always resolved by picking the rule that
-appears first in the grammar file. Reduce/reduce conflicts are almost
-always caused when different sets of grammar rules somehow generate the
-same set of symbols. For example:
+当针对一组符号存在多种可适用的语法规则时，就会产生“归约/归约”冲突。这种冲突几乎总是不好的，并且总
+是通过选择语法文件中出现最早的那个规则来解决。归约/归约冲突几乎总是由不同的语法规则集以某种方式生
+成相同的符号集而引起的。例如：
 
     assignment :  ID EQUALS NUMBER
                |  ID EQUALS expression
@@ -1630,20 +1455,20 @@ same set of symbols. For example:
                | LPAREN expression RPAREN
                | NUMBER
 
-In this case, a reduce/reduce conflict exists between these two rules:
+在这种情况下，这两条规则之间存在“归约/归约”的冲突：
 
     assignment  : ID EQUALS NUMBER
     expression  : NUMBER
 
-For example, if you wrote \"a = 5\", the parser can\'t figure out if
-this is supposed to be reduced as `assignment : ID EQUALS NUMBER` or
-whether it\'s supposed to reduce the 5 as an expression and then reduce
-the rule `assignment : ID EQUALS expression`.
+例如，如果你写的是\"a = 5\"，解析器无法确定这到底是应该被简化为`assignment : ID EQUALS NUMBER`
+这种形式，还是应该先将 5 转换为一个表达式，然后再简化`assignment : ID EQUALS expression`这一规则。
 
 It should be noted that reduce/reduce conflicts are notoriously
 difficult to spot looking at the input grammar. When a reduce/reduce
 conflict occurs, `yacc()` will try to help by printing a warning message
 such as this:
+需要指出的是，从输入语法来看，“归约/归约”冲突通常很难被发现。当出现“归约/归约”冲突时，`yacc()` 
+会尝试通过打印一条警告信息来提供帮助，例如这样的信息：
 
     WARNING: 1 reduce/reduce conflict
     WARNING: reduce/reduce conflict in state 15 resolved using rule (assignment -> ID EQUALS NUMBER)
@@ -1654,14 +1479,16 @@ may not tell you how the parser arrived at such a state. To try and
 figure it out, you\'ll probably have to look at your grammar and the
 contents of the `parser.out` debugging file with an appropriately high
 level of caffeination.
+此消息指出了存在冲突的两条规则。然而，它可能无法告知您解析器是如何达到这种状态的。
+要尝试弄清楚这一点，您可能需要查看您的语法以及“parser.out”调试文件的内容，
+这个工作可能会非常耗时。
 
-### The parser.out file
+### parser.out文件
 
-Tracking down shift/reduce and reduce/reduce conflicts is one of the
-finer pleasures of using an LR parsing algorithm. To assist in
-debugging, `yacc.py` can create a debugging file called \'parser.out\'.
-To create this file, use `yacc.yacc(debug=True)`. The contents of this
-file look like the following:
+找出“移位/归约”和“归约/归约”冲突是使用 LR 解析算法时的一大乐趣所在。为了便于调试，
+`yacc.py` 可以生成一个名为“parser.out”的调试文件。要创建此文件，请使用 `yacc.yacc(debug=True)`
+进行操作。该文件的内容大致如下：
+
 
     Unused terminals:
 
@@ -1910,116 +1737,86 @@ file look like the following:
         DIVIDE          reduce using rule 6
         RPAREN          reduce using rule 6
 
-The different states that appear in this file are a representation of
-every possible sequence of valid input tokens allowed by the grammar.
-When receiving input tokens, the parser is building up a stack and
-looking for matching rules. Each state keeps track of the grammar rules
-that might be in the process of being matched at that point. Within each
-rule, the ``.`` character indicates the current location of the parse
-within that rule. In addition, the actions for each valid input token
-are listed. When a shift/reduce or reduce/reduce conflict arises, rules
-*not* selected are prefixed with an ``!``. For example:
+此文件中出现的不同状态代表了该语法所允许的每一种有效的输入标记的可能序列。在接收输入标记
+时，解析器会构建一个栈，并寻找匹配规则。每个状态都会记录此时可能正在匹配的语法规则。在每
+个规则中，``.`` 字符表示解析在该规则中的当前位置。此外，还列出了每个有效输入标记的相应操作
+。当出现移位/归约或归约/归约冲突时，未被选中的规则前缀会加上一个``!`` 符号。例如：
 
     ! TIMES           [ reduce using rule 2 ]
     ! DIVIDE          [ reduce using rule 2 ]
     ! PLUS            [ shift and go to state 6 ]
     ! MINUS           [ shift and go to state 5 ]
 
-By looking at these rules (and with a little practice), you can usually
-track down the source of most parsing conflicts. It should also be
-stressed that not all shift-reduce conflicts are bad. However, the only
-way to be sure that they are resolved correctly is to look at
-``parser.out`` file generated by ``yacc.py`` by default, can be disabled by passing ``False`` to debug::
+通过仔细研究这些规则（并稍加练习），通常就能找出大多数解析冲突的根源。此外，需要强调
+的是，并非所有的移位-归约冲突都是不好的。然而，要确保这些冲突得到正确解决，唯一的办法
+就是查看由``yacc.py``默认生成的``parser.out`` 文件，该文件可以通过向debug传递
+``False``来禁用。
 
 	yacc.yacc(debug=False)
 
-### Syntax Error Handling
+### 语法错误处理
 
-If you are creating a parser for production use, the handling of syntax
-errors is important. As a general rule, you don\'t want a parser to
-throw up its hands and stop at the first sign of trouble. Instead, you
-want it to report the error, recover if possible, and continue parsing
-so that all of the errors in the input get reported to the user at once.
-This is the standard behavior found in compilers for languages such as
-C, C++, and Java.
+如果你正在为实际应用开发解析器，那么处理语法错误是非常重要的。一般来说，你不会希望解析器
+在遇到第一个问题时就放弃并停止工作。相反，你希望它能够报告错误、尽可能地恢复，并继续进行
+解析，以便一次性将输入中的所有错误都报告给用户。这是诸如 C、C++ 和 Java 等语言的编译器
+所具有的标准行为。
 
-In PLY, when a syntax error occurs during parsing, the error is
-immediately detected (i.e., the parser does not read any more tokens
-beyond the source of the error). However, at this point, the parser
-enters a recovery mode that can be used to try and continue further
-parsing. As a general rule, error recovery in LR parsers is a delicate
-topic that involves ancient rituals and black-magic. The recovery
-mechanism provided by `yacc.py` is comparable to Unix yacc so you may
-want consult a book like O\'Reilly\'s \"Lex and Yacc\" for some of the
-finer details.
+在 PLY 中，如果在解析过程中出现语法错误，该错误会立即被检测到（即，解析器不会再读取
+任何超出错误源范围的标记）。然而，在此阶段，解析器会进入一种恢复模式，可用于尝试继续
+进行进一步的解析。一般来说，LR 解析器中的错误恢复是一个复杂的话题，涉及古老的仪式和
+神秘的魔法。`yacc.py` 提供的恢复机制类似于 Unix 的 yacc，因此您可能需要参考像 
+O'Reilly 的“Lex 和 Yacc”这样的书籍来了解一些更详细的细节。
 
-When a syntax error occurs, `yacc.py` performs the following steps:
+当出现语法错误时，`yacc.py` 会执行以下步骤：
 
-1.  On the first occurrence of an error, the user-defined `p_error()`
-    function is called with the offending token as an argument. However,
-    if the syntax error is due to reaching the end-of-file, `p_error()`
-    is called with an argument of `None`. Afterwards, the parser enters
-    an \"error-recovery\" mode in which it will not make future calls to
-    `p_error()` until it has successfully shifted at least 3 tokens onto
-    the parsing stack.
-2.  If no recovery action is taken in `p_error()`, the offending
-    lookahead token is replaced with a special `error` token.
-3.  If the offending lookahead token is already set to `error`, the top
-    item of the parsing stack is deleted.
-4.  If the entire parsing stack is unwound, the parser enters a restart
-    state and attempts to start parsing from its initial state.
-5.  If a grammar rule accepts `error` as a token, it will be shifted
-    onto the parsing stack.
-6.  If the top item of the parsing stack is `error`, lookahead tokens
-    will be discarded until the parser can successfully shift a new
-    symbol or reduce a rule involving `error`.
+1.  在首次出现错误时，会调用用户自定义的 `p_error()` 函数，并将导致错误的标识符作为参数
+    传递给它。然而，如果语法错误是由于到达文件末尾引起的，则 `p_error()` 函数会以 `None`
+    作为参数进行调用。之后，解析器会进入“错误恢复”模式，在此模式下，它在成功将至少 3 个标识 
+    符移到解析栈之前不会再次调用 `p_error()` 函数。
+2.  如果在 `p_error()` 函数中未采取任何恢复措施，那么引发错误的前导标记将被替换为一个特殊的`error`标记。
+3.  如果引发错误的前瞻标记已设置为`error`状态，那么解析栈中的最顶部元素就会被删除。
+4.  如果整个解析栈被撤销，解析器就会进入重新启动状态，并尝试从其初始状态开始进行解析。
+5.  如果某条语法规则将`error`视为一个标记，那么它就会被移到解析栈中。
+6.  如果解析栈的最顶层元素是`error`，那么后续的待处理标记将会被丢弃，直到解析器能够成功地移除一
+    个新符号或者对涉及`error`的规则进行缩减操作。
 
-#### Recovery and resynchronization with error rules
+#### 使用错误规则进行回复和重新同步
 
-The most well-behaved approach for handling syntax errors is to write
-grammar rules that include the `error` token. For example, suppose your
-language had a grammar rule for a print statement like this:
+处理语法错误时最恰当的方法是编写包含`error`标记的语法规则。例如，假设您的语言有一个类似于这样的
+打印语句的语法规则：
 
     def p_statement_print(p):
          'statement : PRINT expr SEMI'
          ...
 
-To account for the possibility of a bad expression, you might write an
-additional grammar rule like this:
+考虑到可能存在表达不当的情况，您可以添加一条这样的语法规则：
 
     def p_statement_print_error(p):
          'statement : PRINT error SEMI'
          print("Syntax error in print statement. Bad expression")
 
-In this case, the `error` token will match any sequence of tokens that
-might appear up to the first semicolon that is encountered. Once the
-semicolon is reached, the rule will be invoked and the `error` token
-will go away.
+在这种情况下，`error` 标记将匹配在遇到第一个分号之前可能出现的任何一组标记。一旦到达
+分号，规则就会被调用，而 `error` 标记就会消失。
 
-This type of recovery is sometimes known as parser resynchronization.
-The `error` token acts as a wildcard for any bad input text and the
-token immediately following `error` acts as a synchronization token.
+这种类型的恢复有时被称为解析器重新同步。`error`标记可视为任何不良输入文本的通配符，
+而紧接在 `error` 之后的标记则充当同步标记。
 
-It is important to note that the `error` token usually does not appear
-as the last token on the right in an error rule. For example:
+需要特别注意的是，在错误规则中，`error` 标记通常不会出现在右侧的最后一个位置。例如：
 
     def p_statement_print_error(p):
         'statement : PRINT error'
         print("Syntax error in print statement. Bad expression")
 
-This is because the first bad token encountered will cause the rule to
-be reduced\--which may make it difficult to recover if more bad tokens
-immediately follow.
+这是因为一旦遇到第一个错误的标记，规则就会被简化——如果随后紧接着又出现更多错误标记，
+那么就可能难以恢复了。
 
-#### Panic mode recovery
+#### 紧急模式恢复
 
-An alternative error recovery scheme is to enter a panic mode recovery
-in which tokens are discarded to a point where the parser might be able
-to recover in some sensible manner.
+另一种错误恢复方案是进入紧急模式恢复状态，在此状态下会丢弃部分标记，直到解析器能够以某
+种合理的方式进行恢复为止。
 
-Panic mode recovery is implemented entirely in the `p_error()` function.
-For example, this function starts discarding tokens until it reaches a
-closing \'}\'. Then, it restarts the parser in its initial state:
+紧急模式恢复操作完全由 `p_error()` 函数来实现。例如，该函数会开始丢弃标记，直至遇
+到闭合的 `}` 符号。然后，它会将解析器重置到初始状态：
 
     def p_error(p):
         print("Whoa. You are seriously hosed.")
@@ -2034,8 +1831,7 @@ closing \'}\'. Then, it restarts the parser in its initial state:
                 break
         parser.restart()
 
-This function discards the bad token and tells the parser that the error
-was ok:
+此功能会丢弃错误的标记，并告知解析器该错误是可忽略的：
 
     def p_error(p):
         if p:
@@ -2045,27 +1841,22 @@ was ok:
         else:
              print("Syntax error at EOF")
 
-More information on these methods is as follows:
-
+关于这些方法的更多详细信息如下：
 `parser.errok()`
 
-:   This resets the parser state so it doesn\'t think it\'s in
-    error-recovery mode. This will prevent an `error` token from being
-    generated and will reset the internal error counters so that the
-    next syntax error will call `p_error()` again.
+:   这会重置解析器的状态，使其不再认为自己处于错误恢复模式。这样就能避免生成`error`标记，
+    并会重置内部错误计数器，以便下一次出现语法错误时会再次调用 `p_error()` 函数。
 
 `parser.token()`
 
-:   This returns the next token on the input stream.
+:   这会返回输入流中的下一个标记。
 
 `parser.restart()`.
 
-:   This discards the entire parsing stack and resets the parser to its
-    initial state.
+:  这会清除整个解析栈，并将解析器重置至初始状态。
 
-To supply the next lookahead token to the parser, `p_error()` can return
-a token. This might be useful if trying to synchronize on special
-characters. For example:
+为了向解析器提供下一个前瞻标记，`p_error()` 函数可以返回一个标记。如果需要对特殊字符进
+行同步处理，这样做可能会很有用。例如：
 
     def p_error(p):
         # Read ahead looking for a terminating ";"
@@ -2077,108 +1868,80 @@ characters. For example:
         # Return SEMI to the parser as the next lookahead token
         return tok  
 
-Keep in mind in that the above error handling functions, `parser` is an
-instance of the parser created by `yacc()`. You\'ll need to save this
-instance someplace in your code so that you can refer to it during error
-handling.
+请记住，上述错误处理函数中，`parser`是通过`yacc()`创建的解析器的一个实例。您需要将此实
+例保存在您的代码中的某个位置，以便在错误处理时能够引用它。
 
-#### Signalling an error from a production
+#### 从一个产品中报处错误信号
 
-If necessary, a production rule can manually force the parser to enter
-error recovery. This is done by raising the `SyntaxError` exception like
-this:
+如有必要，可以通过手动触发`SyntaxError`异常来强制解析器进入错误恢复模式。具体做法是像这样抛出该异常：
 
     def p_production(p):
         'production : some production ...'
         raise SyntaxError
 
-The effect of raising `SyntaxError` is the same as if the last symbol
-shifted onto the parsing stack was actually a syntax error. Thus, when
-you do this, the last symbol shifted is popped off of the parsing stack
-and the current lookahead token is set to an `error` token. The parser
-then enters error-recovery mode where it tries to reduce rules that can
-accept `error` tokens. The steps that follow from this point are exactly
-the same as if a syntax error were detected and `p_error()` were called.
+提高`SyntaxError`这一设置的效果与将最后一个移至解析栈上的符号实际上是一个语法错误的效果相同。
+因此，当您执行此操作时，移至解析栈的最后一个符号会被从解析栈中弹出，并且当前的预览标记会
+被设置为 `error` 标记。然后，解析器会进入错误恢复模式，在此模式下它会尝试应用那些可以接受 `error` 
+标记的规则。从这一点开始的后续步骤与检测到语法错误并调用`p_error()`的效果完全相同。
 
-One important aspect of manually setting an error is that the
-`p_error()` function will NOT be called in this case. If you need to
-issue an error message, make sure you do it in the production that
-raises `SyntaxError`.
+手动设置错误的一个重要方面是，在这种情况下 `p_error()` 函数不会被调用。如果您需要发
+出错误消息，请务必在引发 `SyntaxError` 的代码段中进行操作。
 
-Note: This feature of PLY is meant to mimic the behavior of the YYERROR
-macro in yacc.
+注意：PLY 的此功能旨在模拟 yacc 中 YYERROR 宏的行为。
 
-#### When Do Syntax Errors Get Reported?
+#### 语法错误何时会被报告？
 
-In most cases, yacc will handle errors as soon as a bad input token is
-detected on the input. However, be aware that yacc may choose to delay
-error handling until after it has reduced one or more grammar rules
-first. This behavior might be unexpected, but it\'s related to special
-states in the underlying parsing table known as \"defaulted states.\" A
-defaulted state is parsing condition where the same grammar rule will be
-reduced regardless of what *valid* token comes next on the input. For
-such states, yacc chooses to go ahead and reduce the grammar rule
-*without reading the next input token*. If the next token is bad, yacc
-will eventually get around to reading it and report a syntax error.
-It\'s just a little unusual in that you might see some of your grammar
-rules firing immediately prior to the syntax error.
+在大多数情况下，当在输入中检测到错误的输入标记时，yacc 会立即处理这些错误。但请注意，
+yacc 可能会选择在先对一个或多个语法规则进行归约之后再进行错误处理。这种行为可能出乎意料，
+但它与底层解析表中的特殊状态（称为“默认状态”）有关。默认状态是指这样的解析条件：无论输入中
+接下来出现的是什么有效的标记，都会对相同的语法规则进行归约。对于这类状态，yacc 会选择直接
+对语法规则进行归约，而不读取接下来的输入标记。如果接下来的标记是错误的，yacc 最终会读取它
+并报告语法错误。这只是有点不同寻常，因为您可能会看到某些语法规则在语法错误之前立即触发。
 
-Usually, the delayed error reporting with defaulted states is harmless
-(and there are other reasons for wanting PLY to behave in this way).
-However, if you need to turn this behavior off for some reason. You can
-clear the defaulted states table like this:
+通常情况下，带有默认状态的延迟错误报告是无害的（而且也有其他原因使得我们希望 PLY 以这种方
+式运行）。然而，如果出于某种原因需要关闭这种行为，您可以像下面这样清除默认状态表：
 
     parser = yacc.yacc()
     parser.defaulted_states = {}
 
-Disabling defaulted states is not recommended if your grammar makes use
-of embedded actions as described in Section 6.11.
+如果您的语法使用了如第 6.11 （哪里来的6.11？）节所述的嵌入式操作，则不建议禁用默认状态。
 
-#### General comments on error handling
+#### 关于错误处理的一般性说明
 
-For normal types of languages, error recovery with error rules and
-resynchronization characters is probably the most reliable technique.
-This is because you can instrument the grammar to catch errors at
-selected places where it is relatively easy to recover and continue
-parsing. Panic mode recovery is really only useful in certain
-specialized applications where you might want to discard huge portions
-of the input text to find a valid restart point.
+对于常规类型的语言而言，利用错误规则和重新同步字符来进行错误恢复可能是最可靠的技术。
+这是因为你可以对语法进行调整，以便在某些易于恢复并继续解析的位置捕获错误。紧急模式下
+的恢复实际上只在某些特定的应用场景中才有用，在这些场景中，你可能需要丢弃大量输入文本
+的一部分，以找到一个有效的重新开始点。
 
-### Line Number and Position Tracking
+### 行号和位置跟踪
 
-Position tracking is often a tricky problem when writing compilers. By
-default, PLY tracks the line number and position of all tokens. This
-information is available using the following functions:
+在编写编译器时，位置跟踪往往是一个颇具挑战性的问题。默认情况下，PLY 会记录所有标记的行
+号和位置。可通过以下函数获取这些信息：
 
-`p.lineno(num)`. Return the line number for symbol *num*
+`p.lineno(num)`。返回符号 *num* 所在的行号。
 
-`p.lexpos(num)`. Return the lexing position for symbol *num*
+`p.lexpos(num)`。返回符号 *num* 的词法位置。
 
-For example:
+例如：
 
     def p_expression(p):
         'expression : expression PLUS expression'
         line   = p.lineno(2)        # line number of the PLUS token
         index  = p.lexpos(2)        # Position of the PLUS token
 
-As an optional feature, `yacc.py` can automatically track line numbers
-and positions for all of the grammar symbols as well. However, this
-extra tracking requires extra processing and can significantly slow down
-parsing. Therefore, it must be enabled by passing the `tracking=True`
-option to `yacc.parse()`. For example:
+作为一种可选功能，`yacc.py` 能够自动为所有的语法符号记录行号和位置信息。然而，这种额外的
+跟踪需要额外的处理过程，并且会显著降低解析速度。因此，必须通过向 `yacc.parse()` 传递 
+`tracking=True` 选项来启用此功能。例如：
 
     yacc.parse(data,tracking=True)
 
-Once enabled, the `lineno()` and `lexpos()` methods work for all grammar
-symbols. In addition, two additional methods can be used:
+一旦启用，`lineno()` 和 `lexpos()` 方法将适用于所有语法符号。此外，还可以使用另外两个方法：
 
-`p.linespan(num)`. Return a tuple (startline,endline) with the starting
-and ending line number for symbol *num*.
+`p.linespan(num)`。返回一个元组 (起始行号，结束行号)，其中包含了符号 *num* 所在的起始行号和结束行号。
 
-`p.lexspan(num)`. Return a tuple (start,end) with the starting and
-ending positions for symbol *num*.
+`p.lexspan(num)`。返回一个元组 (起始位置，结束位置)，其中包含符号 *num* 的起始位置和结束位置。
 
-For example:
+例如：
 
     def p_expression(p):
         'expression : expression PLUS expression'
@@ -2189,38 +1952,30 @@ For example:
         start,end = p.linespan(3)    # Start,end lines of the right expression
         starti,endi = p.lexspan(3)   # Start,end positions of right expression
 
-Note: The `lexspan()` function only returns the range of values up to
-the start of the last grammar symbol.
+注意：`lexspan()` 函数仅返回至最后一个语法符号起始位置之前的数值范围。
 
-Although it may be convenient for PLY to track position information on
-all grammar symbols, this is often unnecessary. For example, if you are
-merely using line number information in an error message, you can often
-just key off of a specific token in the grammar rule. For example:
+虽然对于 PLY 来说，追踪所有语法符号的位置信息可能比较方便，但这种情况往往并非必要。例如，
+如果只是在错误消息中使用行号信息，通常您只需依据语法规则中的某个特定标记即可。例如：
 
     def p_bad_func(p):
         'funccall : fname LPAREN error RPAREN'
         # Line number reported from LPAREN token
         print("Bad function call at line", p.lineno(2))
 
-Similarly, you may get better parsing performance if you only
-selectively propagate line number information where it\'s needed using
-the `p.set_lineno()` method. For example:
+同样，如果您仅在需要的地方（通过使用 `p.set_lineno()` 方法）有选择地传播行号信息，
+那么您可能会获得更好的解析性能。例如：
 
     def p_fname(p):
         'fname : ID'
         p[0] = p[1]
         p.set_lineno(0,p.lineno(1))
 
-PLY doesn\'t retain line number information from rules that have already
-been parsed. If you are building an abstract syntax tree and need to
-have line numbers, you should make sure that the line numbers appear in
-the tree itself.
+PLY 不会保留已解析规则的行号信息。如果您正在构建抽象语法树并且需要行号信息，那么您应当确
+保行号信息直接出现在树中。
 
-### AST Construction
+### 抽象语法树的构造
 
-`yacc.py` provides no special functions for constructing an abstract
-syntax tree. However, such construction is easy enough to do on your
-own.
+`yacc.py` 没有提供用于构建抽象语法树的特殊函数。不过，这种构建方式你自己也能很容易地完成。
 
 A minimal way to construct a tree is to create and propagate a tuple or
 list in each grammar rule function. There are many possible ways to do
