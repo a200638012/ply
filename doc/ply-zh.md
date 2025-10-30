@@ -1475,11 +1475,6 @@ such as this:
     WARNING: reduce/reduce conflict in state 15 resolved using rule (assignment -> ID EQUALS NUMBER)
     WARNING: rejected rule (expression -> NUMBER)
 
-This message identifies the two rules that are in conflict. However, it
-may not tell you how the parser arrived at such a state. To try and
-figure it out, you\'ll probably have to look at your grammar and the
-contents of the `parser.out` debugging file with an appropriately high
-level of caffeination.
 此消息指出了存在冲突的两条规则。然而，它可能无法告知您解析器是如何达到这种状态的。
 要尝试弄清楚这一点，您可能需要查看您的语法以及“parser.out”调试文件的内容，
 这个工作可能会非常耗时。
@@ -2192,11 +2187,6 @@ yacc 所使用的解析技术仅允许在规则的末尾执行操作。例如，
     lex.lex(debug=True)
     yacc.yacc(debug=True)
 
-Normally, the output produced by debugging is routed to either standard
-error or, in the case of `yacc()`, to a file `parser.out`. This output
-can be more carefully controlled by supplying a logging object. Here is
-an example that adds information about where different debugging
-messages are coming from:
 通常情况下，调试产生的输出会被定向到标准错误输出，或者（对于 `yacc()` 函数而言）被输出到一个名为
 `parser.out` 的文件中。若要更精细地控制这些输出，可以通过提供一个日志对象来实现。下面是一个示例，
 它会添加有关不同调试消息来源位置的信息：
