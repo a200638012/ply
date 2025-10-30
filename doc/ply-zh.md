@@ -1977,9 +1977,8 @@ PLY 不会保留已解析规则的行号信息。如果您正在构建抽象语�
 
 `yacc.py` 没有提供用于构建抽象语法树的特殊函数。不过，这种构建方式你自己也能很容易地完成。
 
-A minimal way to construct a tree is to create and propagate a tuple or
-list in each grammar rule function. There are many possible ways to do
-this, but one example would be something like this:
+构建一棵树的一种最简单的方法是在每个语法规则函数中创建并传播一个元组或列表。实现这一目标
+的方法有很多，但以下就是一个示例：
 
     def p_expression_binop(p):
         '''expression : expression PLUS expression
@@ -1997,9 +1996,7 @@ this, but one example would be something like this:
         'expression : NUMBER'
         p[0] = ('number-expression',p[1])
 
-Another approach is to create a set of data structure for different
-kinds of abstract syntax tree nodes and assign nodes to `p[0]` in each
-rule. For example:
+另一种方法是为不同类型的抽象语法树节点创建一组数据结构，并在每个规则中将节点赋值给 `p[0]` 。例如：
 
     class Expr: pass
 
@@ -2029,12 +2026,9 @@ rule. For example:
         'expression : NUMBER'
         p[0] = Number(p[1])
 
-The advantage to this approach is that it may make it easier to attach
-more complicated semantics, type checking, code generation, and other
-features to the node classes.
+这种方法的优点在于，它可能使在节点类中附加更复杂的语义、类型检查、代码生成以及其他功能变得更加容易。
 
-To simplify tree traversal, it may make sense to pick a very generic
-tree structure for your parse tree nodes. For example:
+为了简化树的遍历过程，或许可以为你的解析树节点选择一种非常通用的树结构。例如：
 
     class Node:
         def __init__(self,type,children=None,leaf=None):
@@ -2053,21 +2047,17 @@ tree structure for your parse tree nodes. For example:
 
         p[0] = Node("binop", [p[1],p[3]], p[2])
 
-### Embedded Actions
+### 嵌入式行为
 
-The parsing technique used by yacc only allows actions to be executed at
-the end of a rule. For example, suppose you have a rule like this:
+yacc 所使用的解析技术仅允许在规则的末尾执行操作。例如，假设您有一个这样的规则：
 
     def p_foo(p):
         "foo : A B C D"
         print("Parsed a foo", p[1],p[2],p[3],p[4])
 
-In this case, the supplied action code only executes after all of the
-symbols `A`, `B`, `C`, and `D` have been parsed. Sometimes, however, it
-is useful to execute small code fragments during intermediate stages of
-parsing. For example, suppose you wanted to perform some action
-immediately after `A` has been parsed. To do this, write an empty rule
-like this:
+在这种情况下，所提供的操作代码只有在所有符号`A`, `B`, `C`,和 `D`都解析完毕后才会执行。
+然而，有时在解析过程的中间阶段执行一小段代码片段也是很有用的。例如，假设您希望在解析完
+ `A`之后立即执行某些操作。要实现这一点，可以编写一个如下的空规则：
 
     def p_foo(p):
         "foo : A seen_A B C D"
@@ -2079,15 +2069,11 @@ like this:
         print("Saw an A = ", p[-1])   # Access grammar symbol to left
         p[0] = some_value            # Assign value to seen_A
 
-In this example, the empty `seen_A` rule executes immediately after `A`
-is shifted onto the parsing stack. Within this rule, `p[-1]` refers to
-the symbol on the stack that appears immediately to the left of the
-`seen_A` symbol. In this case, it would be the value of `A` in the `foo`
-rule immediately above. Like other rules, a value can be returned from
-an embedded action by assigning it to `p[0]`
+在该示例中，当`A`被推到解析栈上后，空的 `seen_A` 规则会立即执行。在此规则中， `p[-1]`
+指的是位于`seen_A` 符号左侧紧邻的栈中的符号。在本例中，它将是`foo`规则上方紧邻的 `A` 的
+值。与其他规则一样，可以通过将值赋给`p[0]`来从嵌入式操作中返回一个值。
 
-The use of embedded actions can sometimes introduce extra shift/reduce
-conflicts. For example, this grammar has no conflicts:
+嵌入式操作的使用有时可能会引发额外的移位/归约冲突。例如，以下这种语法就没有冲突情况：
 
     def p_foo(p):
         """foo : abcd
@@ -2099,8 +2085,7 @@ conflicts. For example, this grammar has no conflicts:
     def p_abcx(p):
         "abcx : A B C X"
 
-However, if you insert an embedded action into one of the rules like
-this:
+然而，如果您像这样在其中一条规则中插入一个嵌入式操作的话：
 
     def p_foo(p):
         """foo : abcd
@@ -2115,14 +2100,12 @@ this:
     def p_seen_AB(p):
         "seen_AB :"
 
-an extra shift-reduce conflict will be introduced. This conflict is
-caused by the fact that the same symbol `C` appears next in both the
-`abcd` and `abcx` rules. The parser can either shift the symbol (`abcd`
-rule) or reduce the empty rule `seen_AB` (`abcx` rule).
+将会引入一个额外的移位-归约冲突。这种冲突是由以下情况引起的：相同的符号 `C`在`abcd` 规
+则和 `abcx`规则中紧挨着出现。解析器可以选择将该符号移位（使用`abcd`规则）或者归约空规
+则`seen_AB` （使用`abcx`规则）。
 
-A common use of embedded rules is to control other aspects of parsing
-such as scoping of local variables. For example, if you were parsing C
-code, you might write code like this:
+嵌入式规则的一个常见用途是控制解析的其他方面，比如局部变量的作用域。例如，如果你正在解
+析 C 代码，你可能会编写如下这样的代码：
 
     def p_statements_block(p):
         "statements: LBRACE new_scope statements RBRACE"""
@@ -2137,72 +2120,55 @@ code, you might write code like this:
         push_scope(s)
         ...
 
-In this case, the embedded action `new_scope` executes immediately after
-a `LBRACE` (`{`) symbol is parsed. This might adjust internal symbol
-tables and other aspects of the parser. Upon completion of the rule
-`statements_block`, code might undo the operations performed in the
-embedded action (e.g., `pop_scope()`).
+在这种情况下，嵌入式操作 `new_scope`会在解析到`LBRACE` (`{`)符号后立即执行。这可能会调整内部符号表
+以及解析器的其他方面。在`statements_block`规则执行完毕后，代码可能会撤销嵌入式操作中执
+行的那些操作（例如，调用`pop_scope()`函数）。
 
-### Miscellaneous Yacc Notes
+### 其它关于Yacc的注意事项
 
-1.  By default, `yacc.py` relies on `lex.py` for tokenizing. However, an
-    alternative tokenizer can be supplied as follows:
+1.  默认情况下，`yacc.py` 依赖于 `lex.py` 来进行分词。不过，也可以像下面这样提供一个替代的分词器：
 
         parser = yacc.parse(lexer=x)
 
-    in this case, `x` must be a Lexer object that minimally has a
-    `x.token()` method for retrieving the next token. If an input string
-    is given to `yacc.parse()`, the lexer must also have an `x.input()`
-    method.
+    在这种情况下，变量 `x` 必须是一个“解析器”对象，该对象至少要有一个用于获取下一个标记的 `x.token()` 
+    方法。如果将输入字符串提供给 `yacc.parse()` 函数，那么解析器还必须具有 `x.input()` 方法。
 
-2.  To print copious amounts of debugging during parsing, use:
+2.  要在解析期间打印大量调试信息，请使用：
 
         parser.parse(input_text, debug=True)     
 
-3.  Since LR parsing is driven by tables, the performance of the parser
-    is largely independent of the size of the grammar. The biggest
-    bottlenecks will be the lexer and the complexity of the code in your
-    grammar rules.
+3.  由于 LR 分析是基于表格进行的，因此解析器的性能很大程度上不受语法大小的影响。最大的瓶颈将是词法分
+    析器以及您语法规则中的代码复杂度。
 
-4.  `yacc()` also allows parsers to be defined as classes and as
-    closures (see the section on alternative specification of lexers).
-    However, be aware that only one parser may be defined in a single
-    module (source file). There are various error checks and validation
-    steps that may issue confusing error messages if you try to define
-    multiple parsers in the same source file.
+4.  `yacc()` 还允许将解析器定义为类或闭包（请参阅关于对词法分析器进行替代性定义的章节）。但请注意，
+    在单个模块（源文件）中只能定义一个解析器。如果在同一源文件中尝试定义多个解析器，可能会出现各种错
+    误检查和验证步骤所引发的令人困惑的错误信息。
 
-## Multiple Parsers and Lexers
+## 多个解析器和词法分析器
 
-In advanced parsing applications, you may want to have multiple parsers
-and lexers.
+在高级解析应用中，您可能会需要多个解析器和词法分析器。
 
-As a general rules this isn\'t a problem. However, to make it work, you
-need to carefully make sure everything gets hooked up correctly. First,
-make sure you save the objects returned by `lex()` and `yacc()`. For
-example:
+一般来说，这不会是个问题。但要使其正常运行，你需要仔细确保所有部件都正确连接。首先，要确保
+保存住由 `lex()` 和 `yacc()` 返回的对象。例如：
 
     lexer  = lex.lex()       # Return lexer object
     parser = yacc.yacc()     # Return parser object
 
-Next, when parsing, make sure you give the `parse()` function a
-reference to the lexer it should be using. For example:
+接下来，在解析过程中，请务必向 `parse()` 函数提供一个指向其应使用的词法分析器的引用。例如：
 
     parser.parse(text,lexer=lexer)
 
-If you forget to do this, the parser will use the last lexer
-created\--which is not always what you want.
+如果您忘了执行此操作，解析器将会使用最后创建的词法解析器——而这往往并非您所期望的结果。
 
-Within lexer and parser rule functions, these objects are also
-available. In the lexer, the \"lexer\" attribute of a token refers to
-the lexer object that triggered the rule. For example:
+在词法分析器和解析器的规则函数中，这些对象也是可用的。在词法分析器中，一个标记的“词法分析器”
+属性指的是触发该规则的词法分析器对象。例如：
 
     def t_NUMBER(t):
        r'\d+'
        ...
        print(t.lexer)           ## Show lexer object
 
-In the parser, the \"lexer\" and \"parser\" attributes refer to the
-lexer and parser objects respectively:
+在解析器中，\"lexer\"和\"parser\"这两个属性分别指的是“词法分析器”对象和“解析器”对象：
 
     def p_expr_plus(p):
        'expr : expr PLUS expr'
@@ -2210,21 +2176,17 @@ lexer and parser objects respectively:
        print(p.parser)          # Show parser object
        print(p.lexer)           # Show lexer object
 
-If necessary, arbitrary attributes can be attached to the lexer or
-parser object. For example, if you wanted to have different parsing
-modes, you could attach a mode attribute to the parser object and look
-at it later.
+如果需要的话，可以随意为词法分析器或解析器对象添加属性。例如，如果您想要设置不同的解析模式，
+可以为解析器对象添加一个“模式”属性，并稍后对其进行查看。
 
-## Advanced Debugging
+## 高级调试
 
-Debugging a compiler is typically not an easy task. PLY provides some
-diagostic capabilities through the use of Python\'s `logging` module.
-The next two sections describe this:
+调试编译器通常并非易事。PLY 通过使用 Python 的 `logging` 模块提供了部分诊断功能。
+接下来的两个部分将对此进行详细说明：
 
-### Debugging the lex() and yacc() commands
+### 调试 lex() 和 yacc() 命令
 
-Both the `lex()` and `yacc()` commands have a debugging mode that can be
-enabled using the `debug` flag. For example:
+ `lex()` 和 `yacc()` 这两个命令都具有一个调试模式，可通过使用`debug`标志来启用该模式。例如：
 
     lex.lex(debug=True)
     yacc.yacc(debug=True)
@@ -2234,6 +2196,9 @@ error or, in the case of `yacc()`, to a file `parser.out`. This output
 can be more carefully controlled by supplying a logging object. Here is
 an example that adds information about where different debugging
 messages are coming from:
+通常情况下，调试产生的输出会被定向到标准错误输出，或者（对于 `yacc()` 函数而言）被输出到一个名为
+`parser.out` 的文件中。若要更精细地控制这些输出，可以通过提供一个日志对象来实现。下面是一个示例，
+它会添加有关不同调试消息来源位置的信息：
 
     # Set up a logging object
     import logging
@@ -2248,49 +2213,40 @@ messages are coming from:
     lex.lex(debug=True,debuglog=log)
     yacc.yacc(debug=True,debuglog=log)
 
-If you supply a custom logger, the amount of debugging information
-produced can be controlled by setting the logging level. Typically,
-debugging messages are either issued at the `DEBUG`, `INFO`, or
-`WARNING` levels.
+如果您提供了自定义的日志记录器，那么生成的调试信息量可以通过设置日志级别来控制。
+通常，调试消息会在`DEBUG`、`INFO`或`WARNING`级别下发出。
 
-PLY\'s error messages and warnings are also produced using the logging
-interface. This can be controlled by passing a logging object using the
-`errorlog` parameter:
+PLY 的错误消息和警告信息也是通过日志接口生成的。可以通过使用`errorlog`参数传递
+一个日志对象来对其进行控制：
 
     lex.lex(errorlog=log)
     yacc.yacc(errorlog=log)
 
-If you want to completely silence warnings, you can either pass in a
-logging object with an appropriate filter level or use the `NullLogger`
-object defined in either `lex` or `yacc`. For example:
+如果您希望完全屏蔽警告信息，您可以选择传入一个具有适当过滤级别的日志对象，或者使用在
+`lex` 或 `yacc` 中定义的 `NullLogger` 对象。例如：
 
     yacc.yacc(errorlog=yacc.NullLogger())
 
-### Run-time Debugging
+### 运行时调试
 
-To enable run-time debugging of a parser, use the `debug` option to
-parse. This option can either be an integer (which turns debugging on or
-off) or an instance of a logger object. For example:
+若要实现解析器的运行时调试功能，请使用`debug`选项进行解析操作。此选项既可以是一个整数
+（用于开启或关闭调试功能），也可以是一个日志记录对象的实例。例如：
 
     log = logging.getLogger()
     parser.parse(input,debug=log)
 
-If a logging object is passed, you can use its filtering level to
-control how much output gets generated. The `INFO` level is used to
-produce information about rule reductions. The `DEBUG` level will show
-information about the parsing stack, token shifts, and other details.
-The `ERROR` level shows information related to parsing errors.
+如果传递了一个日志对象，您可以利用其过滤级别来控制生成的输出量。`INFO` 级别用于生成有
+关规则简化的信息。`DEBUG` 级别会显示有关解析栈、标记移动以及其他详细信息的内容。`ERROR`
+级别则会显示与解析错误相关的信息。
 
-For very complicated problems, you should pass in a logging object that
-redirects to a file where you can more easily inspect the output after
-execution.
+对于非常复杂的任务，您应当传入一个日志对象，该对象会将日志记录重定向到一个文件中。这样，
+在执行完毕后，您就能更方便地查看输出内容了。
 
-## Using Python -OO Mode
+## 使用Python -OO 模式
 
-Because of PLY\'s reliance on docstrings, it is not compatible with
-[-OO]{.title-ref} mode of the interpreter (which strips docstrings). If
-you want to support this, you\'ll need to write a decorator or some
-other tool to attach docstrings to functions. For example::
+由于 PLY 依赖于文档字符串，因此它不兼容解释器的 [-OO]{.title-ref} 模式（该模式
+会删除文档字符串）。如果您想要支持此功能，您需要编写一个装饰器或其他工具来为函数附加
+文档字符串。例如：
 
     def _(doc):
         def decorate(func):
@@ -2302,10 +2258,9 @@ other tool to attach docstrings to functions. For example::
     def p_assignment(p):
         ...
 
-PLY does not provide such a decorator by default.
+PLY 默认情况下并不提供这样的装饰器。
 
-## Where to go from here?
+## 下一步如何做？
 
-The `examples` directory of the PLY distribution contains several simple
-examples. Please consult a compilers textbook for the theory and
-underlying implementation details or LR parsing.
+PLY 分发包中的“examples”目录包含了几个简单的示例。有关理论、底层实现细节以及 LR 
+分析法的相关内容，请参考编译器方面的教科书。
